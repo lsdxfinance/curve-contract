@@ -1,0 +1,36 @@
+{
+    "lp_contract": "CurveTokenV3",
+    "swap_address": "",
+    "lp_token_address": "",
+    "gauge_addresses": [""],
+    "lp_constructor": {
+        "name": "Leviosa LSD Pool",
+        "symbol": "LeP"
+    },
+    "swap_constructor": {
+        "_A": 200,
+        "_fee": 4000000,
+        "_admin_fee": 0
+    },
+    "coins": [
+        {
+            "name": "DAI",
+            "decimals": 18,
+            "tethered": false,
+            "underlying_address": "0x6b175474e89094c44da98b954eedeac495271d0f"
+        },
+        {
+            "name": "USDC",
+            "decimals": 6,
+            "tethered": false,
+            "underlying_address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+
+        },
+        {
+            "name": "USDT",
+            "decimals": 6,
+            "tethered": true,
+            "underlying_address": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+        }
+    ]
+}

@@ -22,3 +22,5 @@ hypothesis:
     shrink: false
 
 autofetch_sources: true
+
+dotenv: .env
