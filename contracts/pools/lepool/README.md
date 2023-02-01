@@ -8,8 +8,16 @@ Create `.env` file based on `.env-example`, and
 $ source .env
 ```
 
+## Test
+
+```sh
+$ pipx inject eth-brownie brownie-token-tester
+
+$ brownie test tests/ --pool lepool
+```
+
 ## Deploy
 
 ```sh
-$ brownie run deploy_lepool --network goerli
+$ brownie run deploy_lepool --network <mainnet-fork | goerli | mainnet>
 ```

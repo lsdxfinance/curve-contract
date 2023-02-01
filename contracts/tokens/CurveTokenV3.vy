@@ -121,10 +121,10 @@ def increaseAllowance(_spender: address, _added_value: uint256) -> bool:
     @param _added_value The amount of to increase the allowance
     @return bool success
     """
-    allowance: uint256 = self.allowance[msg.sender][_spender] + _added_value
-    self.allowance[msg.sender][_spender] = allowance
+    _allowance: uint256 = self.allowance[msg.sender][_spender] + _added_value
+    self.allowance[msg.sender][_spender] = _allowance
 
-    log Approval(msg.sender, _spender, allowance)
+    log Approval(msg.sender, _spender, _allowance)
     return True
 
 
@@ -138,10 +138,10 @@ def decreaseAllowance(_spender: address, _subtracted_value: uint256) -> bool:
     @param _subtracted_value The amount of to decrease the allowance
     @return bool success
     """
-    allowance: uint256 = self.allowance[msg.sender][_spender] - _subtracted_value
-    self.allowance[msg.sender][_spender] = allowance
+    _allowance: uint256 = self.allowance[msg.sender][_spender] - _subtracted_value
+    self.allowance[msg.sender][_spender] = _allowance
 
-    log Approval(msg.sender, _spender, allowance)
+    log Approval(msg.sender, _spender, _allowance)
     return True
 
 

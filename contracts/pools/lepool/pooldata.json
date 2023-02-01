@@ -14,23 +14,41 @@
     },
     "coins": [
         {
-            "name": "DAI",
+            "name": "wETH",
             "decimals": 18,
             "tethered": false,
-            "underlying_address": "0x6b175474e89094c44da98b954eedeac495271d0f"
+            "underlying_address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
         },
         {
-            "name": "USDC",
-            "decimals": 6,
+            "name": "stETH",
+            "decimals": 18,
             "tethered": false,
-            "underlying_address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+            "underlying_address": "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
 
         },
         {
-            "name": "USDT",
-            "decimals": 6,
-            "tethered": true,
-            "underlying_address": "0xdac17f958d2ee523a2206206994597c13d831ec7"
+            "name": "sETH",
+            "decimals": 18,
+            "tethered": false,
+            "underlying_address": "0x5e74c9036fb86bd7ecdcb084a0673efc32ea31cb"
+        },
+        {
+            "name": "alETH",
+            "decimals": 18,
+            "tethered": false,
+            "underlying_address": "0x0100546F2cD4C9D97f798fFC9755E47865FF7Ee6"
+        },
+        {
+            "name": "frxETH",
+            "decimals": 18,
+            "tethered": false,
+            "underlying_address": "0x5E8422345238F34275888049021821E8E08CAa1f"
+        },
+        {
+            "name": "ankrETH",
+            "decimals": 18,
+            "tethered": false,
+            "underlying_address": "0xe95a203b1a91a908f9b9ce46459d101078c2c3cb"
         }
     ]
 }

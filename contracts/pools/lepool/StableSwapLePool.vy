@@ -1,6 +1,6 @@
 # @version 0.2.4
 # (c) Curve.Fi, 2020
-# Pool for DAI/USDC/USDT
+# Pool for WETH/stETH/sETH/...
 
 from vyper.interfaces import ERC20
 
@@ -73,14 +73,15 @@ event StopRampA:
 
 
 # This can (and needs to) be changed at compile time
-N_COINS: constant(int128) = 3  # <- change
+N_COINS: constant(int128) = 6  # <- change
 
 FEE_DENOMINATOR: constant(uint256) = 10 ** 10
 LENDING_PRECISION: constant(uint256) = 10 ** 18
 PRECISION: constant(uint256) = 10 ** 18  # The precision to convert to
-PRECISION_MUL: constant(uint256[N_COINS]) = [1, 1000000000000, 1000000000000]
-RATES: constant(uint256[N_COINS]) = [1000000000000000000, 1000000000000000000000000000000, 1000000000000000000000000000000]
-FEE_INDEX: constant(int128) = 2  # Which coin may potentially have fees (USDT)
+
+PRECISION_MUL: constant(uint256[N_COINS]) = [1, 1, 1, 1, 1, 1]
+RATES: constant(uint256[N_COINS]) = [1000000000000000000, 1000000000000000000, 1000000000000000000, 1000000000000000000, 1000000000000000000, 1000000000000000000]
+FEE_INDEX: constant(int128) = -1  # Which coin may potentially have fees (like USDT)
 
 MAX_ADMIN_FEE: constant(uint256) = 10 * 10 ** 9
 MAX_FEE: constant(uint256) = 5 * 10 ** 9
