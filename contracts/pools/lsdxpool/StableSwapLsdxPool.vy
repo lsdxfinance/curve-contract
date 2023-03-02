@@ -1,8 +1,6 @@
 # @version 0.2.8
 """
-@title Curve ETH/stETH StableSwap
-@author Curve.Fi
-@license Copyright (c) Curve.Fi, 2020 - all rights reserved
+@title LSDx ETH/stETH/rETH/sfrxETH StableSwap
 """
 
 from vyper.interfaces import ERC20
@@ -81,7 +79,7 @@ event StopRampA:
 
 
 # These constants must be set prior to compiling
-N_COINS: constant(int128) = 2
+N_COINS: constant(int128) = 4
 
 # fixed constants
 FEE_DENOMINATOR: constant(uint256) = 10 ** 10
@@ -140,9 +138,11 @@ def __init__(
     @param _fee Fee to charge for exchanges
     @param _admin_fee Admin fee
     """
-    assert _coins[0] == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE
-    assert _coins[1] != ZERO_ADDRESS
-
+    for i in range(N_COINS):
+        if i == 0:
+            assert _coins[i] == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE
+        else:
+            assert _coins[i] != ZERO_ADDRESS
     self.coins = _coins
     self.initial_A = _A * A_PRECISION
     self.future_A = _A * A_PRECISION
@@ -188,10 +188,13 @@ def A_precise() -> uint256:
 @view
 @internal
 def _balances(_value: uint256 = 0) -> uint256[N_COINS]:
-    return [
-        self.balance - self.admin_balances[0] - _value,
-        ERC20(self.coins[1]).balanceOf(self) - self.admin_balances[1]
-    ]
+    result: uint256[N_COINS] = empty(uint256[N_COINS])
+    for i in range(N_COINS):
+        if i == 0:
+            result[i] = self.balance - self.admin_balances[i] - _value
+        else:
+            result[i] = ERC20(self.coins[i]).balanceOf(self) - self.admin_balances[i]
+    return result
 
 
 @view
@@ -347,9 +350,11 @@ def add_liquidity(amounts: uint256[N_COINS], min_mint_amount: uint256) -> uint25
     assert mint_amount >= min_mint_amount, "Slippage screwed you"
 
     # Take coins from the sender
-    assert msg.value == amounts[0]
-    if amounts[1] > 0:
-        assert ERC20(self.coins[1]).transferFrom(msg.sender, self, amounts[1])
+    for i in range(N_COINS):
+        if self.coins[i] == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:
+            assert msg.value == amounts[i]
+        elif amounts[i] > 0:
+            assert ERC20(self.coins[i]).transferFrom(msg.sender, self, amounts[i])
 
     # Mint pool tokens
     CurveToken(lp_token).mint(msg.sender, mint_amount)
@@ -458,14 +463,18 @@ def exchange(i: int128, j: int128, dx: uint256, min_dy: uint256) -> uint256:
         if dy_admin_fee != 0:
             self.admin_balances[j] += dy_admin_fee
 
-    coin: address = self.coins[1]
-    if i == 0:
+    in_coin: address = self.coins[i]
+    if in_coin == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:
         assert msg.value == dx
-        assert ERC20(coin).transfer(msg.sender, dy)
     else:
         assert msg.value == 0
-        assert ERC20(coin).transferFrom(msg.sender, self, dx)
+        assert ERC20(in_coin).transferFrom(msg.sender, self, dx)
+
+    out_coin: address = self.coins[j] 
+    if out_coin == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:
         raw_call(msg.sender, b"", value=dy)
+    else:
+        assert ERC20(out_coin).transfer(msg.sender, dy)      
 
     log TokenExchange(msg.sender, i, dx, j, dy)
 
@@ -498,7 +507,7 @@ def remove_liquidity(
         if i == 0:
             raw_call(msg.sender, b"", value=value)
         else:
-            assert ERC20(self.coins[1]).transfer(msg.sender, value)
+            assert ERC20(self.coins[i]).transfer(msg.sender, value)
 
     log RemoveLiquidity(msg.sender, amounts, empty(uint256[N_COINS]), total_supply - _amount)
 
@@ -553,10 +562,15 @@ def remove_liquidity_imbalance(
 
     CurveToken(lp_token).burnFrom(msg.sender, token_amount)  # dev: insufficient funds
 
-    if _amounts[0] != 0:
-        raw_call(msg.sender, b"", value=_amounts[0])
-    if _amounts[1] != 0:
-        assert ERC20(self.coins[1]).transfer(msg.sender, _amounts[1])
+    for i in range(N_COINS):
+        amount: uint256 = _amounts[i]
+        if amount != 0:
+            coin: address = self.coins[i]
+            if coin == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:
+                raw_call(msg.sender, b"", value=amount)
+            else:
+                assert ERC20(self.coins[i]).transfer(msg.sender, _amounts[i])
+            
 
     log RemoveLiquidityImbalance(msg.sender, _amounts, fees, D1, token_supply - token_amount)
 
@@ -680,10 +694,11 @@ def remove_liquidity_one_coin(
 
     CurveToken(self.lp_token).burnFrom(msg.sender, _token_amount)  # dev: insufficient funds
 
-    if i == 0:
+    coin: address = self.coins[i]
+    if coin == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:
         raw_call(msg.sender, b"", value=dy)
     else:
-        assert ERC20(self.coins[1]).transfer(msg.sender, dy)
+        assert ERC20(self.coins[i]).transfer(msg.sender, dy)
 
     log RemoveLiquidityOne(msg.sender, _token_amount, dy)
 
@@ -805,13 +820,13 @@ def revert_transfer_ownership():
 def withdraw_admin_fees():
     assert msg.sender == self.owner  # dev: only owner
 
-    amount: uint256 = self.admin_balances[0]
-    if amount != 0:
-        raw_call(msg.sender, b"", value=amount)
-
-    amount = self.admin_balances[1]
-    if amount != 0:
-        assert ERC20(self.coins[1]).transfer(msg.sender, amount)
+    for i in range(N_COINS):
+        amount: uint256 = self.admin_balances[i]
+        if amount != 0:
+            if self.coins[i] == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:
+                raw_call(msg.sender, b"", value=amount)
+            else:
+                assert ERC20(self.coins[i]).transfer(msg.sender, amount)
 
     self.admin_balances = empty(uint256[N_COINS])
 
