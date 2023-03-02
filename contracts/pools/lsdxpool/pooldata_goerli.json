@@ -4,8 +4,8 @@
     "lp_token_address": "",
     "gauge_addresses": [""],
     "lp_constructor": {
-        "name": "Leviosa LSD Pool",
-        "symbol": "LeP"
+        "name": "LSDx Pool",
+        "symbol": "ETHx"
     },
     "swap_constructor": {
         "_A": 200,

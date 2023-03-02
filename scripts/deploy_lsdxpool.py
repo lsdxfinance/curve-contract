@@ -8,13 +8,13 @@ from brownie.project.main import get_loaded_projects
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('run')
-    parser.add_argument('deploy_lepool')
+    parser.add_argument('deploy_lsdxpool')
     parser.add_argument('--network', dest='network', type=str, help='network arg')
     args = parser.parse_args()
     network = args.network
     
     if network not in ['mainnet-fork', 'goerli', 'mainnet']:
-        print('Usage: brownie run deploy_lepool --network <mainnet-fork | goerli | mainnet>')
+        print('Usage: brownie run deploy_lsdxpool --network <mainnet-fork | goerli | mainnet>')
         return
     
     if network == 'mainnet-fork':
@@ -26,7 +26,7 @@ def main():
 
     # deployment settings
     # most settings are taken from `contracts/pools/{POOL_NAME}/pooldata.json`
-    POOL_NAME = "lepool"
+    POOL_NAME = "lsdxpool"
     POOL_OWNER = DEPLOYER.address
     
     tx_params = {
