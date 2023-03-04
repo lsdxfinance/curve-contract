@@ -1,5 +1,6 @@
 {
     "lp_contract": "CurveTokenV3",
+    "pool_types": ["eth", "arate"],
     "swap_address": "",
     "lp_token_address": "",
     "gauge_addresses": [""],
@@ -8,7 +9,7 @@
         "symbol": "ETHx"
     },
     "swap_constructor": {
-        "_A": 200,
+        "_A": 30,
         "_fee": 4000000,
         "_admin_fee": 0
     },

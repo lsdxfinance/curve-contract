@@ -16,6 +16,7 @@ WRAPPED_COIN_METHODS = {
     "yERC20": {"get_rate": "getPricePerFullShare", "mint": "deposit"},
     "aETH": {"get_rate": "ratio"},
     "rETH": {"get_rate": "getExchangeRate"},
+    "sfrxETH": {"get_rate": "pricePerShare"},
 }
 
 pytest_plugins = [

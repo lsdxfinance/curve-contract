@@ -19,7 +19,7 @@ $ brownie compile
 ```sh
 $ pipx inject eth-brownie brownie-token-tester
 
-$ brownie test tests/ --pool lsdxpool
+$ brownie test tests/ --pool lsdxpool --unitary
 ```
 
 ## Deploy
