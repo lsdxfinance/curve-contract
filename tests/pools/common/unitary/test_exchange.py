@@ -76,4 +76,5 @@ def test_min_dy(bob, swap, wrapped_coins, sending, receiving, wrapped_decimals, 
     else:
         received = wrapped_coins[receiving].balanceOf(bob)
 
+    # print('test_min_dy, sending %s %s, receiving %s %s. min_dy: %s' % (amount, wrapped_coins[sending], received, wrapped_coins[receiving], min_dy))
     assert abs(received - min_dy) <= 1

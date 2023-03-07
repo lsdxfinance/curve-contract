@@ -1,6 +1,7 @@
 {
     "lp_contract": "CurveTokenV3",
-    "pool_types": ["eth", "arate"],
+    "pool_types": ["eth", "arate", "crate"],
+    "wrapped_contract": ["rETH", "sfrxETH"],
     "swap_address": "",
     "lp_token_address": "",
     "gauge_addresses": [""],
@@ -15,10 +16,10 @@
     },
     "coins": [
         {
-            "name": "wETH",
+            "name": "ETH",
             "decimals": 18,
             "tethered": false,
-            "underlying_address": "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6"
+            "underlying_address": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
         },
         {
             "name": "stETH",
@@ -28,10 +29,23 @@
 
         },
         {
-            "name": "sETH",
+            "name": "rETH",
             "decimals": 18,
+            "wrapped_decimals": 18,
             "tethered": false,
-            "underlying_address": "0x37216d2366B68Bd8bC64Eb01B83EFA765C21b483"
+            "wrapped_contract": "rETH",
+            "wrapped_address": "0x178e141a0e3b34152f73ff610437a7bf9b83267a"
+        },
+        {
+            "name": "sfrxETH",
+            "decimals": 18,
+            "wrapped_decimals": 18,
+            "tethered": false,
+            "wrapped_contract": "sfrxETH",
+            "wrapped_address": "0x7e74D46a4E7C0cce7E0c29EA080b55e6bEE2ff21"
         }
-    ]
+    ],
+    "testing": {
+        "initial_amount": 10000
+    }
 }

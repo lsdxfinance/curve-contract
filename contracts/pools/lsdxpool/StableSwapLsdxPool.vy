@@ -219,9 +219,9 @@ def balances(i: uint256) -> uint256:
 
 @view
 @internal
-def _xp(rates: uint256[N_COINS]) -> uint256[N_COINS]:
+def _xp(rates: uint256[N_COINS], _value: uint256 = 0) -> uint256[N_COINS]:
     result: uint256[N_COINS] = rates
-    balances: uint256[N_COINS] = self._balances()
+    balances: uint256[N_COINS] = self._balances(_value)
     for i in range(N_COINS):
         result[i] = result[i] * balances[i] / PRECISION
     return result
@@ -494,7 +494,7 @@ def exchange(i: int128, j: int128, dx: uint256, min_dy: uint256) -> uint256:
 
     rates: uint256[N_COINS] = self._stored_rates()
 
-    xp: uint256[N_COINS] = self._xp(rates)
+    xp: uint256[N_COINS] = self._xp(rates, msg.value)
     x: uint256 = xp[i] + dx * rates[i] / PRECISION
     y: uint256 = self.get_y(i, j, x, xp)
     dy: uint256 = xp[j] - y - 1  # -1 just in case there were some rounding errors

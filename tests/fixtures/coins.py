@@ -58,14 +58,17 @@ class _MintableTestToken(MintableForkToken):
 
 def _deploy_wrapped(project, alice, pool_data, idx, underlying, aave_lending_pool):
     coin_data = pool_data["coins"][idx]
-    fn_names = WRAPPED_COIN_METHODS[pool_data["wrapped_contract"]]
-    deployer = getattr(project, pool_data["wrapped_contract"])
+    # 'wrapped_contract' in coin_data override same entry in pool_data
+    wrapped_contract = coin_data["wrapped_contract"] if coin_data.get("wrapped_contract", None) is not None else pool_data["wrapped_contract"]
+    # print('wrapped_contract: %s' % (wrapped_contract))
+    fn_names = WRAPPED_COIN_METHODS[wrapped_contract]
+    deployer = getattr(project, wrapped_contract)
 
     decimals = coin_data["wrapped_decimals"]
     name = coin_data.get("name", f"Coin {idx}")
     symbol = coin_data.get("name", f"C{idx}")
 
-    if pool_data["wrapped_contract"] == "ATokenMock":
+    if wrapped_contract == "ATokenMock":
         contract = deployer.deploy(
             name, symbol, decimals, underlying, aave_lending_pool, {"from": alice}
         )
