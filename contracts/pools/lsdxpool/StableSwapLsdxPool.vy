@@ -1,6 +1,6 @@
 # @version 0.2.12
 """
-@title LSDx ETH/stETH/rETH/sfrxETH StableSwap
+@title LSDx ETH/stETH/frxETH/rETH StableSwap
 """
 
 from vyper.interfaces import ERC20
@@ -8,13 +8,9 @@ from vyper.interfaces import ERC20
 interface rETH:
     def getExchangeRate() -> uint256: view
 
-interface sfrxETH:
-    def pricePerShare() -> uint256: view
-
 interface CurveToken:
     def mint(_to: address, _value: uint256) -> bool: nonpayable
     def burnFrom(_to: address, _value: uint256) -> bool: nonpayable
-
 
 # Events
 event TokenExchange:
@@ -130,7 +126,7 @@ def __init__(
     """
     @notice Contract constructor
     @param _owner Contract owner address
-    @param _coins Addresses of ERC20 contracts of coins. Should be in exact order: ETH/stETH/rETH/sfrxETH
+    @param _coins Addresses of ERC20 contracts of coins. Should be in exact order: ETH/stETH/frxETH/rETH
     @param _pool_token Address of the token representing LP share
     @param _A Amplification coefficient multiplied by n * (n - 1)
     @param _fee Fee to charge for exchanges
@@ -189,8 +185,8 @@ def _stored_rates() -> uint256[N_COINS]:
     return [
         convert(PRECISION, uint256),
         convert(PRECISION, uint256),
-        rETH(self.coins[2]).getExchangeRate(),
-        sfrxETH(self.coins[3]).pricePerShare()
+        convert(PRECISION, uint256),
+        rETH(self.coins[3]).getExchangeRate()
     ]
 
 
