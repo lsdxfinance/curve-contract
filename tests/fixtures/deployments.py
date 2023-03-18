@@ -17,21 +17,20 @@ def _swap(
 
     abi = next(i["inputs"] for i in deployer.abi if i["type"] == "constructor")
 
-    args = {
-        "_coins": wrapped,
-        "_underlying_coins": underlying,
-        "_pool_token": pool_token,
-        "_base_pool": base_swap,
-        "_A": 360 * 2,
-        "_fee": 0,
-        "_admin_fee": 0,
-        "_offpeg_fee_multiplier": 0,
-        "_owner": alice,
-        "_reward_admin": alice,
-        "_reward_claimant": alice,
-        "_y_pool": swap_mock,
-        "_aave_lending_pool": aave_lending_pool,
-    }
+    args = pool_data["swap_constructor"]
+    args.update(
+        _coins = wrapped,
+        _underlying_coins = underlying,
+        _pool_token = pool_token,
+        _base_pool = base_swap,
+        # _fee = 0, // Use fee from pool data
+        _owner = alice,
+        _offpeg_fee_multiplier = 0,
+        _reward_admin = alice,
+        _reward_claimant = alice,
+        _y_pool = swap_mock,
+        _aave_lending_pool = aave_lending_pool
+    )
     deployment_args = [args[i["name"]] for i in abi] + [({"from": alice})]
 
     contract = deployer.deploy(*deployment_args)

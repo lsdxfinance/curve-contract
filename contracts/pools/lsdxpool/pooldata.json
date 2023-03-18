@@ -10,9 +10,9 @@
         "symbol": "ETHx"
     },
     "swap_constructor": {
-        "_A": 30,
-        "_fee": 4000000,
-        "_admin_fee": 5000000000
+        "_A": 360,
+        "_fee": 10000000,
+        "_admin_fee": 10000000000
     },
     "coins": [
         {
