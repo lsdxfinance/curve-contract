@@ -23,8 +23,8 @@ def test_exchange(
     set_fees,
     get_admin_balances,
 ):
-    if fee or admin_fee:
-        set_fees(10 ** 10 * fee, 10 ** 10 * admin_fee)
+    #if fee or admin_fee:
+    set_fees(10 ** 10 * fee, 10 ** 10 * admin_fee)
 
     amount = 10 ** wrapped_decimals[sending]
     if wrapped_coins[sending] == ETH_ADDRESS:

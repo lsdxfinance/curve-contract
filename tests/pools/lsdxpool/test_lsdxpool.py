@@ -43,7 +43,7 @@ def test_lsdx_e2e(alice, bob, swap, wrapped_coins, wrapped_decimals, initial_amo
     # Initially, 1 ETHx = 1 ETH/xxETH/...
     assert swap.get_virtual_price() == 1 * 10 ** 18
     # fee and admin_fee are from pool_data
-    assert swap.fee() == 1000000  # 0.1%
+    assert swap.fee() == 10000000  # 0.1%
     assert swap.admin_fee() == 10000000000 # 100% of fee, aka 0.1%
     assert_admin_balances(swap, 0, 0, 0, 0)
     
