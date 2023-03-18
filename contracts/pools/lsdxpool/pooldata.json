@@ -39,7 +39,8 @@
             "decimals": 18,
             "wrapped_decimals": 18,
             "tethered": false,
-            "wrapped_address": "0xae78736cd615f374d3085123a210448e74fc6393"
+            "wrapped_address": "0xae78736cd615f374d3085123a210448e74fc6393",
+            "underlying_address": "0xae78736cd615f374d3085123a210448e74fc6393"
         }
     ],
     "testing": {

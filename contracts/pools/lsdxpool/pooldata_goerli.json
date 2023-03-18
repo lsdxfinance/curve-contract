@@ -10,7 +10,7 @@
         "symbol": "ETHx"
     },
     "swap_constructor": {
-        "_A": 360,
+        "_A": 720,
         "_fee": 10000000,
         "_admin_fee": 10000000000
     },
@@ -39,7 +39,8 @@
             "decimals": 18,
             "wrapped_decimals": 18,
             "tethered": false,
-            "wrapped_address": "0x178e141a0e3b34152f73ff610437a7bf9b83267a"
+            "wrapped_address": "0x178e141a0e3b34152f73ff610437a7bf9b83267a",
+            "underlying_address": "0x178e141a0e3b34152f73ff610437a7bf9b83267a"
         }
     ],
     "testing": {
