@@ -32,6 +32,6 @@ $ brownie run deploy_lsdxpool --network <mainnet-fork | goerli | mainnet>
 
 ### Goerli
 
-- StableSwapLsdxPool: 0x32e94C6e95053AE3A4c71Ac5Db04703781830Dfe
+- ETHx: 0x473B817176E7386F143DdD327E04C0685D5F6fDE
 
-- CurveTokenV3: 0x77FDf827e337324699fe7e12bA50CA846FdA57D6
+- StableSwapLsdxPool: 0x7dEb766e53750C94d398f5eBc2CABBc1b05c2c3D
