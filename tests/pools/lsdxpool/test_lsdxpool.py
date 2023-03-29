@@ -44,14 +44,16 @@ def test_lsdx_e2e(alice, bob, swap, wrapped_coins, wrapped_decimals, initial_amo
     assert swap.get_virtual_price() == 1 * 10 ** 18
     # fee and admin_fee are from pool_data
     assert swap.fee() == 10000000  # 0.1%
-    assert swap.admin_fee() == 10000000000 # 100% of fee, aka 0.1%
+    assert swap.admin_fee() == 5000000000 # 50% of fee, aka 0.1%
     assert_admin_balances(swap, 0, 0, 0, 0)
     
     # Bob wants to exchange 10 ETH for stETH, estimate the received amount first
+    print('LP virtual price before exchange: %s' % (swap.get_virtual_price() / (10 ** 18)))
     dx = 10 * 10 ** 18
     min_dy = swap.get_dy(0, 1, dx)
     bob_prev_steth_balance = wrapped_coins[1].balanceOf(bob)
     swap.exchange(0, 1, dx, min_dy - 1, {"from": bob, "value": dx})
+    print('LP virtual price after exchange: %s' % (swap.get_virtual_price() / (10 ** 18)))
     dy = wrapped_coins[1].balanceOf(bob) - bob_prev_steth_balance
     assert abs(dy - min_dy) <= 1
     
