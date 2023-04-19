@@ -1,6 +1,6 @@
 # @version 0.2.12
 """
-@title LSDx ETH/stETH/frxETH/rETH StableSwap
+@title ETHx ETH/stETH/frxETH/rETH StableSwap
 """
 
 from vyper.interfaces import ERC20

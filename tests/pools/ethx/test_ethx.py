@@ -8,9 +8,9 @@ def assert_admin_balances(swap, eth_balance, steth_balance, frxeth_balance, reth
     assert swap.admin_balances(3) == reth_balance
     
 
-def test_lsdx_e2e(alice, bob, swap, wrapped_coins, wrapped_decimals, initial_amounts, pool_token, mint_alice, approve_alice, mint_bob, approve_bob):
+def test_ethx_e2e(alice, bob, swap, wrapped_coins, wrapped_decimals, initial_amounts, pool_token, mint_alice, approve_alice, mint_bob, approve_bob):
     # Initial LP is 0
-    assert pool_token.name() == 'LSDx Pool'
+    assert pool_token.name() == 'ETHx Pool'
     assert pool_token.symbol() == 'ETHx'
     assert pool_token.totalSupply() == 0
     

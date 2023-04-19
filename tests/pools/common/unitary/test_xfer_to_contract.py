@@ -8,7 +8,7 @@ pytestmark = pytest.mark.usefixtures("add_initial_liquidity")
 
 
 @pytest.mark.skip_pool("steth")
-@pytest.mark.skip_pool("lsdxpool")
+@pytest.mark.skip_pool("ethx")
 def test_unexpected_eth(swap, alice, bob, get_admin_balances, wrapped_coins):
     code = """
 # @version 0.2.4

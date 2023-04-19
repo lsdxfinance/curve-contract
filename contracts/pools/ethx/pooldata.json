@@ -6,7 +6,7 @@
     "lp_token_address": "",
     "gauge_addresses": [""],
     "lp_constructor": {
-        "name": "LSDx Pool",
+        "name": "ETHx Pool",
         "symbol": "ETHx"
     },
     "swap_constructor": {
@@ -25,22 +25,22 @@
             "name": "stETH",
             "decimals": 18,
             "tethered": false,
-            "underlying_address": "0x1643E812aE58766192Cf7D2Cf9567dF2C37e9B7F"
+            "underlying_address": "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
 
         },
         {
             "name": "frxETH",
             "decimals": 18,
             "tethered": false,
-            "underlying_address": "0x6Bc98c23e1b72e5aA4b627f814c475071FF2dB47"
+            "underlying_address": "0x5E8422345238F34275888049021821E8E08CAa1f"
         },
         {
             "name": "rETH",
             "decimals": 18,
             "wrapped_decimals": 18,
             "tethered": false,
-            "wrapped_address": "0x178e141a0e3b34152f73ff610437a7bf9b83267a",
-            "underlying_address": "0x178e141a0e3b34152f73ff610437a7bf9b83267a"
+            "wrapped_address": "0xae78736cd615f374d3085123a210448e74fc6393",
+            "underlying_address": "0xae78736cd615f374d3085123a210448e74fc6393"
         }
     ],
     "testing": {
