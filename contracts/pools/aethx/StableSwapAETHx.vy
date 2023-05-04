@@ -1,14 +1,15 @@
-# @version ^0.2.12
+# @version 0.2.12
 """
-@title StableSwap
+@title Curve ankrETH / ETHx Metapool
 @author Curve.Fi
 @license Copyright (c) Curve.Fi, 2020 - all rights reserved
-@notice Metapool implementation
-@dev This contract is only a template, pool-specific constants
-     must be set prior to compiling
+@dev Utilizes 5Pool to allow swaps between ankrETH / ETH / stETH / frxETH / rETH
 """
 
 from vyper.interfaces import ERC20
+
+interface aETH:
+    def ratio() -> uint256: view
 
 interface CurveToken:
     def totalSupply() -> uint256: view
@@ -96,18 +97,20 @@ event StopRampA:
     t: uint256
 
 
-# These constants must be set prior to compiling
-N_COINS: constant(int128) = ___N_COINS___
+N_COINS: constant(int128) = 2
 MAX_COIN: constant(int128) = N_COINS - 1
 
 FEE_DENOMINATOR: constant(uint256) = 10 ** 10
 PRECISION: constant(uint256) = 10 ** 18  # The precision to convert to
-PRECISION_MUL: constant(uint256[N_COINS]) = ___PRECISION_MUL___
-RATES: constant(uint256[N_COINS]) = ___RATES___
-BASE_N_COINS: constant(int128) = ___BASE_N_COINS___
+PRECISION_MUL: constant(uint256[N_COINS]) = [1, 1]
+RATES: constant(uint256[N_COINS]) = [1000000000000000000, 1000000000000000000]
 
 # An asset which may have a transfer fee (USDT)
 FEE_ASSET: constant(address) = 0xdAC17F958D2ee523a2206206994597C13D831ec7
+BASE_N_COINS: constant(int128) = 4
+N_ALL_COINS: constant(int128) = N_COINS + BASE_N_COINS - 1
+BASE_PRECISION_MUL: constant(uint256[BASE_N_COINS]) = [1, 1, 1, 1]
+BASE_RATES: constant(uint256[BASE_N_COINS]) = [1000000000000000000, 1000000000000000000, 1000000000000000000, 1000000000000000000]
 
 MAX_ADMIN_FEE: constant(uint256) = 10 * 10 ** 9
 MAX_FEE: constant(uint256) = 5 * 10 ** 9
@@ -188,17 +191,8 @@ def __init__(
         self.base_coins[i] = base_coin
 
         # approve underlying coins for infinite transfers
-        response: Bytes[32] = raw_call(
-            base_coin,
-            concat(
-                method_id("approve(address,uint256)"),
-                convert(_base_pool, bytes32),
-                convert(MAX_UINT256, bytes32),
-            ),
-            max_outsize=32,
-        )
-        if len(response) > 0:
-            assert convert(response, bool)
+        if base_coin != 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:
+            assert ERC20(base_coin).approve(_base_pool, MAX_UINT256)
 
 
 @view
@@ -422,20 +416,7 @@ def add_liquidity(_amounts: uint256[N_COINS], _min_mint_amount: uint256) -> uint
     # Take coins from the sender
     for i in range(N_COINS):
         if _amounts[i] > 0:
-            # "safeTransferFrom" which works for ERC20s which return bool or not
-            response: Bytes[32] = raw_call(
-                self.coins[i],
-                concat(
-                    method_id("transferFrom(address,address,uint256)"),
-                    convert(msg.sender, bytes32),
-                    convert(self, bytes32),
-                    convert(_amounts[i], bytes32),
-                ),
-                max_outsize=32,
-            )
-            if len(response) > 0:
-                assert convert(response, bool)  # dev: failed transfer
-            # end "safeTransferFrom"
+            assert ERC20(self.coins[i]).transferFrom(msg.sender, self, _amounts[i])  # dev: failed transfer
 
     # Mint pool tokens
     CurveToken(lp_token).mint(msg.sender, mint_amount)
@@ -605,30 +586,8 @@ def exchange(i: int128, j: int128, _dx: uint256, _min_dy: uint256) -> uint256:
     # When rounding errors happen, we undercharge admin fee in favor of LP
     self.balances[j] = old_balances[j] - dy - dy_admin_fee
 
-    response: Bytes[32] = raw_call(
-        self.coins[i],
-        concat(
-            method_id("transferFrom(address,address,uint256)"),
-            convert(msg.sender, bytes32),
-            convert(self, bytes32),
-            convert(_dx, bytes32),
-        ),
-        max_outsize=32,
-    )
-    if len(response) > 0:
-        assert convert(response, bool)
-
-    response = raw_call(
-        self.coins[j],
-        concat(
-            method_id("transfer(address,uint256)"),
-            convert(msg.sender, bytes32),
-            convert(dy, bytes32),
-        ),
-        max_outsize=32,
-    )
-    if len(response) > 0:
-        assert convert(response, bool)
+    assert ERC20(self.coins[i]).transferFrom(msg.sender, self, _dx)
+    assert ERC20(self.coins[j]).transfer(msg.sender, dy)
 
     log TokenExchange(msg.sender, i, _dx, j, dy)
 
@@ -837,6 +796,7 @@ def remove_liquidity_imbalance(_amounts: uint256[N_COINS], _max_burn_amount: uin
 
     lp_token: address = self.lp_token
     token_supply: uint256 = CurveToken(lp_token).totalSupply()
+    assert token_supply != 0  # dev: zero total supply
     token_amount: uint256 = (D0 - D2) * token_supply / D0
     assert token_amount != 0  # dev: zero tokens burned
     token_amount += 1  # In case of rounding errors - make it unfavorable for the "attacker"
