@@ -88,6 +88,11 @@ event NewFee:
     fee: uint256
     admin_fee: uint256
 
+event WithdrawAdminFee:
+    to: indexed(address)
+    token: indexed(address)
+    token_amount: uint256
+
 event RampA:
     old_A: uint256
     new_A: uint256
@@ -123,7 +128,8 @@ ADMIN_ACTIONS_DELAY: constant(uint256) = 3 * 86400
 MIN_RAMP_TIME: constant(uint256) = 86400
 
 coins: public(address[N_COINS])
-balances: public(uint256[N_COINS])
+admin_balances: public(uint256[N_COINS])
+
 fee: public(uint256)  # fee * 1e10
 admin_fee: public(uint256)  # admin_fee * 1e10
 
@@ -233,10 +239,9 @@ def A_precise() -> uint256:
 
 @view
 @public
-def get_ethx_rate(ethx_pool: address) -> uint256:
+def get_ethx_rate() -> uint256:
     """
     @notice Calculate the exchange rate for 1 ETHx -> ETH
-    @param _coin The StableSwapETHxPool contract address
     @return The exchange rate of 1 ETHx in ETH
     """
     eth_balance: uint256 = CurvePool(self.base_pool).balances(0)
@@ -256,7 +261,7 @@ def get_ethx_rate(ethx_pool: address) -> uint256:
 @internal
 def _stored_rates() -> uint256[N_COINS]:
     return [
-        _get_ethx_rate(),
+        get_ethx_rate(),
         PRECISION * PRECISION / aETH(self.coins[1]).ratio()
     ]
 
@@ -294,20 +299,20 @@ def _xp(rates: uint256[N_COINS]) -> uint256[N_COINS]:
 
 @pure
 @internal
-def _get_D(_xp: uint256[N_COINS], _amp: uint256) -> uint256:
+def get_D(_xp: uint256[N_COINS], _amp: uint256) -> uint256:
     S: uint256 = 0
     Dprev: uint256 = 0
 
-    for _x in _xp:
+    for _x in xp:
         S += _x
     if S == 0:
         return 0
 
     D: uint256 = S
-    Ann: uint256 = _amp * N_COINS
+    Ann: uint256 = amp * N_COINS
     for _i in range(255):
         D_P: uint256 = D
-        for _x in _xp:
+        for _x in xp:
             D_P = D_P * D / (_x * N_COINS)  # If division by 0, this will be borked: only withdrawal will work. And that is good
         Dprev = D
         D = (Ann * S / A_PRECISION + D_P * N_COINS) * D / ((Ann - A_PRECISION) * D / A_PRECISION + (N_COINS + 1) * D_P)
@@ -329,7 +334,7 @@ def get_D_mem(rates: uint256[N_COINS], _balances: uint256[N_COINS], amp: uint256
     result: uint256[N_COINS] = rates
     for i in range(N_COINS):
         result[i] = result[i] * _balances[i] / PRECISION
-    return self._get_D(result, amp)
+    return self.get_D(result, amp)
 
 
 @view
@@ -340,39 +345,37 @@ def get_virtual_price() -> uint256:
     @dev Useful for calculating profits
     @return LP token virtual price normalized to 1e18
     """
-    amp: uint256 = self._A()
-    xp: uint256[N_COINS] = self._xp(self._stored_rates())
-    D: uint256 = self._get_D(xp, amp)
+    D: uint256 = self.get_D(self._xp(self._stored_rates()), self._A())
     # D is in the units similar to DAI (e.g. converted to precision 1e18)
     # When balanced, D = n * x_u - total virtual value of the portfolio
-    token_supply: uint256 = CurveToken(self.lp_token).totalSupply()
+    token_supply: uint256 = ERC20(self.lp_token).totalSupply()
     return D * PRECISION / token_supply
 
 
 @view
 @external
-def calc_token_amount(_amounts: uint256[N_COINS], _is_deposit: bool) -> uint256:
+def calc_token_amount(amounts: uint256[N_COINS], is_deposit: bool) -> uint256:
     """
     @notice Calculate addition or reduction in token supply from a deposit or withdrawal
     @dev This calculation accounts for slippage, but not fees.
          Needed to prevent front-running, not for precise calculations!
-    @param _amounts Amount of each coin being deposited
-    @param _is_deposit set True for deposits, False for withdrawals
+    @param amounts Amount of each coin being deposited
+    @param is_deposit set True for deposits, False for withdrawals
     @return Expected amount of LP tokens received
     """
     amp: uint256 = self._A()
+    balances: uint256[N_COINS] = self._balances()
     rates: uint256[N_COINS] = self._stored_rates()
-    balances: uint256[N_COINS] = self.balances
     D0: uint256 = self.get_D_mem(rates, balances, amp)
     for i in range(N_COINS):
-        if _is_deposit:
-            balances[i] += _amounts[i]
+        if is_deposit:
+            balances[i] += amounts[i]
         else:
-            balances[i] -= _amounts[i]
-    D1: uint256 = self._get_D_mem(rates, balances, amp)
-    token_amount: uint256 = CurveToken(self.lp_token).totalSupply()
+            balances[i] -= amounts[i]
+    D1: uint256 = self.get_D_mem(rates, balances, amp)
+    token_amount: uint256 = ERC20(self.lp_token).totalSupply()
     diff: uint256 = 0
-    if _is_deposit:
+    if is_deposit:
         diff = D1 - D0
     else:
         diff = D0 - D1
@@ -381,11 +384,11 @@ def calc_token_amount(_amounts: uint256[N_COINS], _is_deposit: bool) -> uint256:
 
 @external
 @nonreentrant('lock')
-def add_liquidity(_amounts: uint256[N_COINS], _min_mint_amount: uint256) -> uint256:
+def add_liquidity(amounts: uint256[N_COINS], min_mint_amount: uint256) -> uint256:
     """
     @notice Deposit coins into the pool
-    @param _amounts List of amounts of coins to deposit
-    @param _min_mint_amount Minimum amount of LP tokens to mint from the deposit
+    @param amounts List of amounts of coins to deposit
+    @param min_mint_amount Minimum amount of LP tokens to mint from the deposit
     @return Amount of LP tokens received by depositing
     """
     assert not self.is_killed  # dev: is killed
@@ -394,17 +397,17 @@ def add_liquidity(_amounts: uint256[N_COINS], _min_mint_amount: uint256) -> uint
     amp: uint256 = self._A()
     rates: uint256[N_COINS] = self._stored_rates()
     lp_token: address = self.lp_token
-    token_supply: uint256 = CurveToken(lp_token).totalSupply()
+    token_supply: uint256 = ERC20(lp_token).totalSupply()
     D0: uint256 = 0
-    old_balances: uint256[N_COINS] = self.balances
+    old_balances: uint256[N_COINS] = self._balances()
     if token_supply != 0:
         D0 = self.get_D_mem(rates, old_balances, amp)
 
     new_balances: uint256[N_COINS] = old_balances
     for i in range(N_COINS):
         if token_supply == 0:
-            assert _amounts[i] > 0  # dev: initial deposit requires all coins
-        new_balances[i] = old_balances[i] + _amounts[i]
+            assert amounts[i] > 0  # dev: initial deposit requires all coins
+        new_balances[i] += amounts[i]
 
     # Invariant after change
     D1: uint256 = self.get_D_mem(rates, new_balances, amp)
@@ -413,12 +416,12 @@ def add_liquidity(_amounts: uint256[N_COINS], _min_mint_amount: uint256) -> uint
     # We need to recalculate the invariant accounting for fees
     # to calculate fair user's share
     fees: uint256[N_COINS] = empty(uint256[N_COINS])
-    D2: uint256 = D1
     mint_amount: uint256 = 0
+    D2: uint256 = 0
     if token_supply > 0:
+        # Only account for fees if we are not the first to deposit
         fee: uint256 = self.fee * N_COINS / (4 * (N_COINS - 1))
         admin_fee: uint256 = self.admin_fee
-        # Only account for fees if we are not the first to deposit
         for i in range(N_COINS):
             ideal_balance: uint256 = D1 * old_balances[i] / D0
             difference: uint256 = 0
@@ -427,37 +430,37 @@ def add_liquidity(_amounts: uint256[N_COINS], _min_mint_amount: uint256) -> uint
             else:
                 difference = new_balances[i] - ideal_balance
             fees[i] = fee * difference / FEE_DENOMINATOR
-            self.balances[i] = new_balances[i] - (fees[i] * admin_fee / FEE_DENOMINATOR)
+            if admin_fee != 0:
+                self.admin_balances[i] += fees[i] * admin_fee / FEE_DENOMINATOR
             new_balances[i] -= fees[i]
         D2 = self.get_D_mem(rates, new_balances, amp)
         mint_amount = token_supply * (D2 - D0) / D0
     else:
-        self.balances = new_balances
         mint_amount = D1  # Take the dust if there was any
 
-    assert mint_amount >= _min_mint_amount, "Slippage screwed you"
+    assert mint_amount >= min_mint_amount, "Slippage screwed you"
 
     # Take coins from the sender
     for i in range(N_COINS):
         if _amounts[i] > 0:
-            assert ERC20(self.coins[i]).transferFrom(msg.sender, self, _amounts[i])  # dev: failed transfer
+            assert ERC20(self.coins[i]).transferFrom(msg.sender, self, amounts[i])
 
     # Mint pool tokens
     CurveToken(lp_token).mint(msg.sender, mint_amount)
 
-    log AddLiquidity(msg.sender, _amounts, fees, D1, token_supply + mint_amount)
+    log AddLiquidity(msg.sender, amounts, fees, D1, token_supply + mint_amount)
 
     return mint_amount
 
 
 @view
 @internal
-def _get_y(i: int128, j: int128, x: uint256, _xp: uint256[N_COINS]) -> uint256:
+def get_y(i: int128, j: int128, x: uint256, xp: uint256[N_COINS]) -> uint256:
     """
     Calculate x[j] if one makes x[i] = x
 
     Done by solving quadratic equation iteratively.
-    x_1**2 + x_1 * (sum' - (A*n**n - 1) * D / (A * n**n)) = D ** (n + 1) / (n ** (2 * n) * prod' * A)
+    x_1**2 + x1 * (sum' - (A*n**n - 1) * D / (A * n**n)) = D ** (n + 1) / (n ** (2 * n) * prod' * A)
     x_1**2 + b*x_1 = c
 
     x_1 = (x_1**2 + c) / (2*x_1 + b)
@@ -472,11 +475,11 @@ def _get_y(i: int128, j: int128, x: uint256, _xp: uint256[N_COINS]) -> uint256:
     assert i >= 0
     assert i < N_COINS
 
-    A: uint256 = self._A()
-    D: uint256 = self._get_D(_xp, A)
-    Ann: uint256 = A * N_COINS
+    amp: uint256 = self._A()
+    D: uint256 = self.get_D(xp, amp)
+    Ann: uint256 = amp * N_COINS
     c: uint256 = D
-    S: uint256 = 0
+    S_: uint256 = 0
     _x: uint256 = 0
     y_prev: uint256 = 0
 
@@ -484,13 +487,13 @@ def _get_y(i: int128, j: int128, x: uint256, _xp: uint256[N_COINS]) -> uint256:
         if _i == i:
             _x = x
         elif _i != j:
-            _x = _xp[_i]
+            _x = xp[_i]
         else:
             continue
-        S += _x
+        S_ += _x
         c = c * D / (_x * N_COINS)
     c = c * D * A_PRECISION / (Ann * N_COINS)
-    b: uint256 = S + D * A_PRECISION / Ann  # - D
+    b: uint256 = S_ + D * A_PRECISION / Ann  # - D
     y: uint256 = D
     for _i in range(255):
         y_prev = y
@@ -558,7 +561,7 @@ def get_dy_underlying(i: int128, j: int128, _dx: uint256) -> uint256:
             return CurvePool(base_pool).get_dy(base_i, base_j, _dx)
 
     # This pool is involved only when in-pool assets are used
-    y: uint256 = self._get_y(meta_i, meta_j, x, xp)
+    y: uint256 = self.get_y(meta_i, meta_j, x, xp)
     dy: uint256 = xp[meta_j] - y - 1
     dy = (dy - self.fee * dy / FEE_DENOMINATOR)
 
@@ -581,8 +584,8 @@ def exchange(i: int128, j: int128, _dx: uint256, _min_dy: uint256) -> uint256:
     @dev Index values can be found via the `coins` public getter method
     @param i Index value for the coin to send
     @param j Index valie of the coin to recieve
-    @param _dx Amount of `i` being exchanged
-    @param _min_dy Minimum amount of `j` to receive
+    @param dx Amount of `i` being exchanged
+    @param min_dy Minimum amount of `j` to receive
     @return Actual amount of `j` received
     """
     assert not self.is_killed  # dev: is killed
@@ -590,12 +593,12 @@ def exchange(i: int128, j: int128, _dx: uint256, _min_dy: uint256) -> uint256:
     rates: uint256[N_COINS] = self._stored_rates()
 
     xp: uint256[N_COINS] = self._xp(rates)
-    x: uint256 = xp[i] + _dx * rates[i] / PRECISION
-    y: uint256 = self._get_y(i, j, x, xp)
+    x: uint256 = xp[i] + dx * rates[i] / PRECISION
+    y: uint256 = self.get_y(i, j, x, xp)
     dy: uint256 = xp[j] - y - 1  # -1 just in case there were some rounding errors
     dy_fee: uint256 = dy * self.fee / FEE_DENOMINATOR
     dy = (dy - dy_fee) * PRECISION / rates[j]
-    assert dy >= _min_dy, "Too few coins in result"
+    assert dy >= min_dy, "Exchange resulted in fewer coins than expected"
 
     admin_fee: uint256 = self.admin_fee
     if admin_fee != 0:
@@ -603,10 +606,10 @@ def exchange(i: int128, j: int128, _dx: uint256, _min_dy: uint256) -> uint256:
         if dy_admin_fee != 0:
             self.admin_balances[j] += dy_admin_fee
 
-    assert ERC20(self.coins[i]).transferFrom(msg.sender, self, _dx)
+    assert ERC20(self.coins[i]).transferFrom(msg.sender, self, dx)
     assert ERC20(self.coins[j]).transfer(msg.sender, dy)
 
-    log TokenExchange(msg.sender, i, _dx, j, dy)
+    log TokenExchange(msg.sender, i, dx, j, dy)
 
     return dy
 
@@ -696,7 +699,7 @@ def exchange_underlying(i: int128, j: int128, _dx: uint256, _min_dy: uint256) ->
             # Adding number of pool tokens
             x += xp[MAX_COIN]
 
-        y: uint256 = self._get_y(meta_i, meta_j, x, xp)
+        y: uint256 = self.get_y(meta_i, meta_j, x, xp)
 
         # Either a real coin or token
         dy = xp[meta_j] - y - 1  # -1 just in case there were some rounding errors
@@ -759,7 +762,7 @@ def remove_liquidity(_amount: uint256, _min_amounts: uint256[N_COINS]) -> uint25
     """
     amounts: uint256[N_COINS] = self._balances()
     lp_token: address = self.lp_token
-    total_supply: uint256 = CurveToken(lp_token).totalSupply()
+    total_supply: uint256 = ERC20(lp_token).totalSupply()
     CurveToken(lp_token).burnFrom(msg.sender, _amount)  # dev: insufficient funds
 
     for i in range(N_COINS):
@@ -792,7 +795,7 @@ def remove_liquidity_imbalance(_amounts: uint256[N_COINS], _max_burn_amount: uin
     new_balances: uint256[N_COINS] = old_balances
     for i in range(N_COINS):
         new_balances[i] -= _amounts[i]
-    D1: uint256 = self._et_D_mem(rates, new_balances, amp)
+    D1: uint256 = self.get_D_mem(rates, new_balances, amp)
 
     fees: uint256[N_COINS] = empty(uint256[N_COINS])
     fee: uint256 = self.fee * N_COINS / (4 * (N_COINS - 1))
@@ -812,16 +815,17 @@ def remove_liquidity_imbalance(_amounts: uint256[N_COINS], _max_burn_amount: uin
     D2: uint256 = self.get_D_mem(rates, new_balances, amp)
 
     lp_token: address = self.lp_token
-    token_supply: uint256 = CurveToken(lp_token).totalSupply()
+    token_supply: uint256 = ERC20(lp_token).totalSupply()
     token_amount: uint256 = (D0 - D2) * token_supply / D0
 
     assert token_amount != 0  # dev: zero tokens burned
     assert token_amount <= _max_burn_amount, "Slippage screwed you"
 
     CurveToken(lp_token).burnFrom(msg.sender, token_amount)  # dev: insufficient funds
+
     for i in range(N_COINS):
         if _amounts[i] != 0:
-            ERC20(self.coins[i]).transfer(msg.sender, _amounts[i])
+            assert ERC20(self.coins[i]).transfer(msg.sender, _amounts[i])
 
     log RemoveLiquidityImbalance(msg.sender, _amounts, fees, D1, token_supply - token_amount)
 
@@ -830,7 +834,7 @@ def remove_liquidity_imbalance(_amounts: uint256[N_COINS], _max_burn_amount: uin
 
 @pure
 @internal
-def _get_y_D(A: uint256, i: int128, _xp: uint256[N_COINS], D: uint256) -> uint256:
+def get_y_D(A_: uint256, i: int128, xp: uint256[N_COINS], D: uint256) -> uint256:
     """
     Calculate x[i] if one reduces D from being calculated for xp to D
 
@@ -842,24 +846,24 @@ def _get_y_D(A: uint256, i: int128, _xp: uint256[N_COINS], D: uint256) -> uint25
     """
     # x in the input is converted to the same price/precision
 
-    assert i >= 0  # dev: i below zero
+    assert i >= 0       # dev: i below zero
     assert i < N_COINS  # dev: i above N_COINS
 
-    Ann: uint256 = A * N_COINS
+    Ann: uint256 = A_ * N_COINS
     c: uint256 = D
-    S: uint256 = 0
+    S_: uint256 = 0
     _x: uint256 = 0
     y_prev: uint256 = 0
 
     for _i in range(N_COINS):
         if _i != i:
-            _x = _xp[_i]
+            _x = xp[_i]
         else:
             continue
-        S += _x
+        S_ += _x
         c = c * D / (_x * N_COINS)
     c = c * D * A_PRECISION / (Ann * N_COINS)
-    b: uint256 = S + D * A_PRECISION / Ann
+    b: uint256 = S_ + D * A_PRECISION / Ann
     y: uint256 = D
 
     for _i in range(255):
@@ -885,7 +889,7 @@ def _calc_withdraw_one_coin(_token_amount: uint256, i: int128) -> (uint256, uint
     rates: uint256[N_COINS] = self._stored_rates()
     xp: uint256[N_COINS] = self._xp(rates)
     D0: uint256 = self.get_D(xp, amp)
-    total_supply: uint256 = CurveToken(self.lp_token).totalSupply()
+    total_supply: uint256 = ERC20(self.lp_token).totalSupply()
     D1: uint256 = D0 - _token_amount * D0 / total_supply
     new_y: uint256 = self.get_y_D(amp, i, xp, D1)
 
@@ -949,27 +953,28 @@ def remove_liquidity_one_coin(_token_amount: uint256, i: int128, _min_amount: ui
 
 
 ### Admin functions ###
+
 @external
 def ramp_A(_future_A: uint256, _future_time: uint256):
     assert msg.sender == self.owner  # dev: only owner
     assert block.timestamp >= self.initial_A_time + MIN_RAMP_TIME
     assert _future_time >= block.timestamp + MIN_RAMP_TIME  # dev: insufficient time
 
-    initial_A: uint256 = self._A()
-    future_A_p: uint256 = _future_A * A_PRECISION
+    _initial_A: uint256 = self._A()
+    _future_A_p: uint256 = _future_A * A_PRECISION
 
     assert _future_A > 0 and _future_A < MAX_A
-    if future_A_p < initial_A:
-        assert future_A_p * MAX_A_CHANGE >= initial_A
+    if _future_A_p < _initial_A:
+        assert _future_A_p * MAX_A_CHANGE >= _initial_A
     else:
-        assert future_A_p <= initial_A * MAX_A_CHANGE
+        assert _future_A_p <= _initial_A * MAX_A_CHANGE
 
-    self.initial_A = initial_A
-    self.future_A = future_A_p
+    self.initial_A = _initial_A
+    self.future_A = _future_A_p
     self.initial_A_time = block.timestamp
     self.future_A_time = _future_time
 
-    log RampA(initial_A, future_A_p, block.timestamp, _future_time)
+    log RampA(_initial_A, _future_A_p, block.timestamp, _future_time)
 
 
 @external
@@ -987,33 +992,34 @@ def stop_ramp_A():
 
 
 @external
-def commit_new_fee(_new_fee: uint256, _new_admin_fee: uint256):
+def commit_new_fee(new_fee: uint256, new_admin_fee: uint256):
     assert msg.sender == self.owner  # dev: only owner
     assert self.admin_actions_deadline == 0  # dev: active action
-    assert _new_fee <= MAX_FEE  # dev: fee exceeds maximum
-    assert _new_admin_fee <= MAX_ADMIN_FEE  # dev: admin fee exceeds maximum
+    assert new_fee <= MAX_FEE  # dev: fee exceeds maximum
+    assert new_admin_fee <= MAX_ADMIN_FEE  # dev: admin fee exceeds maximum
 
-    deadline: uint256 = block.timestamp + ADMIN_ACTIONS_DELAY
-    self.admin_actions_deadline = deadline
-    self.future_fee = _new_fee
-    self.future_admin_fee = _new_admin_fee
+    _deadline: uint256 = block.timestamp + ADMIN_ACTIONS_DELAY
+    self.admin_actions_deadline = _deadline
+    self.future_fee = new_fee
+    self.future_admin_fee = new_admin_fee
 
-    log CommitNewFee(deadline, _new_fee, _new_admin_fee)
+    log CommitNewFee(_deadline, new_fee, new_admin_fee)
 
 
 @external
+@nonreentrant('lock')
 def apply_new_fee():
     assert msg.sender == self.owner  # dev: only owner
     assert block.timestamp >= self.admin_actions_deadline  # dev: insufficient time
     assert self.admin_actions_deadline != 0  # dev: no active action
 
     self.admin_actions_deadline = 0
-    fee: uint256 = self.future_fee
-    admin_fee: uint256 = self.future_admin_fee
-    self.fee = fee
-    self.admin_fee = admin_fee
+    _fee: uint256 = self.future_fee
+    _admin_fee: uint256 = self.future_admin_fee
+    self.fee = _fee
+    self.admin_fee = _admin_fee
 
-    log NewFee(fee, admin_fee)
+    log NewFee(_fee, _admin_fee)
 
 
 @external
@@ -1055,28 +1061,28 @@ def revert_transfer_ownership():
     self.transfer_ownership_deadline = 0
 
 
-@view
 @external
-def admin_balances(i: uint256) -> uint256:
-    return ERC20(self.coins[i]).balanceOf(self) - self.balances[i]
-
-
-@external
-def withdraw_admin_fees():
+def withdraw_admin_fees(to: address):
     assert msg.sender == self.owner  # dev: only owner
+    assert to != ZERO_ADDRESS  # dev: zero address
 
     for i in range(N_COINS):
-        coin: address = self.coins[i]
-        value: uint256 = ERC20(coin).balanceOf(self) - self.balances[i]
-        if value > 0:
-            ERC20(coin).transfer(msg.sender, value)
+        amount: uint256 = self.admin_balances[i]
+        if amount != 0:
+            assert ERC20(self.coins[i]).transfer(msg.sender, amount)
+            log WithdrawAdminFee(to, coin, value)
+
+    self.admin_balances = empty(uint256[N_COINS])
 
 
 @external
 def donate_admin_fees():
+    """
+    Just in case admin balances somehow become higher than total (rounding error?)
+    this can be used to fix the state, too
+    """
     assert msg.sender == self.owner  # dev: only owner
-    for i in range(N_COINS):
-        self.balances[i] = ERC20(self.coins[i]).balanceOf(self)
+    self.admin_balances = empty(uint256[N_COINS])
 
 
 @external
