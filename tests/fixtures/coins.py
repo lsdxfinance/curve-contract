@@ -129,7 +129,7 @@ def _underlying(alice, project, pool_data, is_forked, base_pool_token):
             if coin_data.get("base_pool_token"):
                 coins.append(base_pool_token)
                 continue
-            if not coin_data.get("decimals"):
+            if coin_data.get("wrapped_decimals"):
                 contract = _deploy_wrapped(project, alice, pool_data, i, ZERO_ADDRESS, ZERO_ADDRESS)
             else:
                 decimals = coin_data["decimals"]

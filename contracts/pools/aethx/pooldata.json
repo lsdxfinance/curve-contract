@@ -1,6 +1,7 @@
 {
     "base_pool": "ethx",
     "pool_types": ["meta"],
+    "wrapped_contract": "aETH",
     "lp_contract": "CurveTokenV3",
     "swap_address": "",
     "lp_token_address": "",
@@ -19,7 +20,9 @@
         {
             "name": "ankrETH",
             "decimals": 18,
+            "wrapped_decimals": 18,
             "tethered": false,
+            "wrapped_address": "0xe95a203b1a91a908f9b9ce46459d101078c2c3cb",
             "underlying_address": "0xe95a203b1a91a908f9b9ce46459d101078c2c3cb"
         },
         {
@@ -28,5 +31,8 @@
             "base_pool_token": true,
             "underlying_address": "0x21eAD867C8c5181854f6f8Ce71f75b173d2Bc16A"
         }
-    ]
+    ],
+    "testing": {
+        "initial_amount": 10000
+    }
 }

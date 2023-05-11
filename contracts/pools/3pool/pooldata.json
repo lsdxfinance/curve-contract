@@ -7,6 +7,11 @@
         "name": "Curve.fi DAI/USDC/USDT",
         "symbol": "3Crv"
     },
+    "swap_constructor": {
+        "_A": 200,
+        "_fee": 4000000,
+        "_admin_fee": 0
+    },
     "coins": [
         {
             "name": "DAI",

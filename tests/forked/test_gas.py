@@ -14,6 +14,7 @@ def test_swap_gas(
     alice,
     bob,
     swap,
+    base_swap,
     n_coins,
     wrapped_decimals,
     underlying_decimals,
@@ -56,16 +57,22 @@ def test_swap_gas(
         chain.sleep(3600)
 
     # perform swaps between each underlying coin
+    print('aETHx Pool balance, aETH: %s, ETHx: %s' % (wrapped_coins[0].balanceOf(swap.address) / (10 ** 18), wrapped_coins[1].balanceOf(swap.address) / (10 ** 18)))
+    print('ETHx Pool balance, ETH: %s, stETH: %s, frxETH: %s, rETH: %s' % (base_swap.balance() / (10 ** 18), underlying_coins[2].balanceOf(base_swap.address) / (10 ** 18), underlying_coins[3].balanceOf(base_swap.address) / (10 ** 18), underlying_coins[4].balanceOf(base_swap.address) / (10 ** 18)))
     if hasattr(swap, "exchange_underlying"):
         for send, recv in itertools.permutations(range(n_coins), 2):
             amount = 10 ** underlying_decimals[send]
 
-            underlying_coins[send]._mint_for_testing(bob, amount + 1, {"from": bob})
-            recv_balance = underlying_coins[recv].balanceOf(bob)
-            if recv_balance > 0:
-                underlying_coins[recv].transfer(alice, recv_balance, {"from": bob})
+            print('underlying_coins, send: %s (%s), recv: %s (%s). amount: %s' % (send, underlying_coins[send], recv, underlying_coins[recv], amount / (10 ** 18)))
+            if underlying_coins[send] != ETH_ADDRESS:
+                underlying_coins[send]._mint_for_testing(bob, amount + 1, {"from": bob})
+            if underlying_coins[recv] != ETH_ADDRESS:
+                recv_balance = underlying_coins[recv].balanceOf(bob)
+                if recv_balance > 0:
+                    underlying_coins[recv].transfer(alice, recv_balance, {"from": bob})
 
-            swap.exchange_underlying(send, recv, amount, 0, {"from": bob})
+            value = 0 if underlying_coins[send] != ETH_ADDRESS else amount
+            swap.exchange_underlying(send, recv, amount, 0, {"from": bob, "value": value})
             chain.sleep(3600)
 
     # remove liquidity balanced

@@ -241,12 +241,14 @@ def get_ethx_rate() -> uint256:
     @notice Calculate the exchange rate for 1 ETHx -> ETH
     @return The exchange rate of 1 ETHx in ETH
     """
+    ethx_total_supply: uint256 = ERC20(self.lp_token).totalSupply()
+    if ethx_total_supply == 0:
+        return 1 * PRECISION
+
     eth_balance: uint256 = CurvePool(self.base_pool).balances(0)
     steth_balance: uint256 = CurvePool(self.base_pool).balances(1)
     frxeth_balance: uint256 = CurvePool(self.base_pool).balances(2)
     reth_balance: uint256 = CurvePool(self.base_pool).balances(3)
-
-    ethx_total_supply: uint256 = ERC20(self.lp_token).totalSupply()
 
     reth: address = CurvePool(self.base_pool).coins(3)
     reth_exchange_rate: uint256 = rETH(reth).getExchangeRate()
@@ -258,8 +260,8 @@ def get_ethx_rate() -> uint256:
 @internal
 def _stored_rates() -> uint256[N_COINS]:
     return [
-        self.get_ethx_rate(),
-        PRECISION * PRECISION / aETH(self.coins[1]).ratio()
+        PRECISION * PRECISION / aETH(self.coins[0]).ratio(),
+        self.get_ethx_rate()
     ]
 
 
@@ -699,17 +701,27 @@ def exchange_underlying(i: int128, j: int128, _dx: uint256, _min_dy: uint256) ->
 
         # Withdraw from the base pool if needed
         if base_j >= 0:
-            out_amount: uint256 = ERC20(output_coin).balanceOf(self)
-            CurvePool(base_pool).remove_liquidity_one_coin(dy, base_j, 0)
-            dy = ERC20(output_coin).balanceOf(self) - out_amount
+            if output_coin == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:
+                out_amount: uint256 = self.balance
+                CurvePool(base_pool).remove_liquidity_one_coin(dy, base_j, 0)
+                dy = self.balance - out_amount
+            else:
+                out_amount: uint256 = ERC20(output_coin).balanceOf(self)
+                CurvePool(base_pool).remove_liquidity_one_coin(dy, base_j, 0)
+                dy = ERC20(output_coin).balanceOf(self) - out_amount
 
         assert dy >= _min_dy, "Too few coins in result"
 
     else:
         # If both are from the base pool
-        dy = ERC20(output_coin).balanceOf(self)
-        CurvePool(base_pool).exchange(base_i, base_j, dx_w_fee, _min_dy)
-        dy = ERC20(output_coin).balanceOf(self) - dy
+        if output_coin == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:
+            dy = self.balance
+            CurvePool(base_pool).exchange(base_i, base_j, dx_w_fee, _min_dy)
+            dy = self.balance - dy
+        else:
+            dy = ERC20(output_coin).balanceOf(self)
+            CurvePool(base_pool).exchange(base_i, base_j, dx_w_fee, _min_dy)
+            dy = ERC20(output_coin).balanceOf(self) - dy
 
     if output_coin == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:
         raw_call(msg.sender, b"", value=dy)
@@ -1067,3 +1079,9 @@ def kill_me():
 def unkill_me():
     assert msg.sender == self.owner  # dev: only owner
     self.is_killed = False
+
+
+@external
+@payable
+def __default__():
+    pass

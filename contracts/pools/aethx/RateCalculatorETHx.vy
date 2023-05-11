@@ -32,13 +32,15 @@ def get_rate() -> uint256:
     @notice Calculate the exchange rate for 1 ETHx -> ETH
     @return The exchange rate of 1 ETHx in ETH
     """
+    ethx: address = ETHxPool(self.ethx_pool).lp_token()
+    ethx_total_supply: uint256 = ERC20(ethx).totalSupply()
+    if ethx_total_supply == 0:
+        return 10 ** 18
+
     eth_balance: uint256 = ETHxPool(self.ethx_pool).balances(0)
     steth_balance: uint256 = ETHxPool(self.ethx_pool).balances(1)
     frxeth_balance: uint256 = ETHxPool(self.ethx_pool).balances(2)
     reth_balance: uint256 = ETHxPool(self.ethx_pool).balances(3)
-
-    ethx: address = ETHxPool(self.ethx_pool).lp_token()
-    ethx_total_supply: uint256 = ERC20(ethx).totalSupply()
 
     reth: address = ETHxPool(self.ethx_pool).coins(3)
     reth_exchange_rate: uint256 = rETH(reth).getExchangeRate()
