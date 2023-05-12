@@ -1,4 +1,4 @@
-# @version 0.2.12
+# @version 0.2.16
 """
 @title ankrETH/ETHx Metapool
 @dev Utilizes 5Pool to allow swaps between ankrETH / ETH / stETH / frxETH / rETH
@@ -666,16 +666,31 @@ def exchange_underlying(i: int128, j: int128, _dx: uint256, _min_dy: uint256) ->
 
         x: uint256 = 0
         if base_i < 0:
+            # i from MetaPool, j from BasePool
             x = xp[i] + dx_w_fee * rates[i] / PRECISION
         else:
-            # i is from BasePool
+            # i from BasePool, j from MetaPool
             # At first, get the amount of pool tokens
             base_inputs: uint256[BASE_N_COINS] = empty(uint256[BASE_N_COINS])
             base_inputs[base_i] = dx_w_fee
             coin_i: address = self.coins[MAX_COIN]
             # Deposit and measure delta
             x = ERC20(coin_i).balanceOf(self)
-            CurvePool(base_pool).add_liquidity(base_inputs, 0)
+            if input_coin == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:
+                _response: Bytes[32] = raw_call(
+                    base_pool,
+                    _abi_encode(
+                        base_inputs,
+                        convert(0, bytes32),
+                        method_id=method_id("add_liquidity(uint256[4],uint256)"),
+                    ),
+                    value=dx_w_fee,
+                    max_outsize=32,
+                )
+                if len(_response) > 0:
+                    assert convert(_response, bool)
+            else:
+                CurvePool(base_pool).add_liquidity(base_inputs, 0)
             # Need to convert pool token to "virtual" units using rates
             # dx is also different now
             dx_w_fee = ERC20(coin_i).balanceOf(self) - x
