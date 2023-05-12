@@ -1,4 +1,4 @@
-# @version 0.2.12
+# @version 0.2.16
 """
 @title "Zap" Depositer for ankrETH/ETHx pool
 """
@@ -113,7 +113,18 @@ def add_liquidity(amounts: uint256[N_ALL_COINS], min_mint_amount: uint256) -> ui
 
     # Deposit to the base pool
     if deposit_base:
-        CurveBase(self.base_pool).add_liquidity(base_amounts, 0)
+        _response: Bytes[32] = raw_call(
+            self.base_pool,
+            _abi_encode(
+                base_amounts,
+                convert(0, bytes32),
+                method_id=method_id("add_liquidity(uint256[4],uint256)"),
+            ),
+            value=msg.value,
+            max_outsize=32,
+        )
+        if len(_response) > 0:
+            assert convert(_response, bool)
         meta_amounts[MAX_COIN] = ERC20(self.coins[MAX_COIN]).balanceOf(self)
 
     # Deposit to the meta pool
@@ -197,11 +208,12 @@ def remove_liquidity_one_coin(_token_amount: uint256, i: int128, _min_amount: ui
         )
 
     # Tranfer the coin out
-    coin_amount: uint256 = ERC20(coin).balanceOf(self)
+    coin_amount: uint256 = 0
     if coin == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:
         coin_amount = self.balance
         raw_call(msg.sender, b"", value=coin_amount)
     else:
+        coin_amount = ERC20(coin).balanceOf(self)
         assert ERC20(coin).transfer(msg.sender, coin_amount)
 
     return coin_amount
@@ -319,3 +331,9 @@ def calc_token_amount(amounts: uint256[N_ALL_COINS], is_deposit: bool) -> uint25
     meta_amounts[MAX_COIN] = _base_tokens
 
     return CurveMeta(self.pool).calc_token_amount(meta_amounts, is_deposit)
+
+
+@external
+@payable
+def __default__():
+    pass

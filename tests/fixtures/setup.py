@@ -82,8 +82,14 @@ def approve_alice(alice, swap, underlying_coins, wrapped_coins):
 
 
 @pytest.fixture(scope="module")
-def approve_zap(alice, bob, zap, pool_token, underlying_coins):
+def approve_zap(alice, bob, zap, pool_token, underlying_coins, wrapped_coins):
+    for wrapped in wrapped_coins:
+        # print('approve_zap, approved wrapped coin %s' % (wrapped))
+        wrapped.approve(zap, 2 ** 256 - 1, {"from": alice})
+        wrapped.approve(zap, 2 ** 256 - 1, {"from": bob})
+        
     for underlying in underlying_coins:
+        # print('approve_zap, approved underling coin %s' % (underlying))
         if underlying == "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE":
             continue
         underlying.approve(zap, 2 ** 256 - 1, {"from": alice})

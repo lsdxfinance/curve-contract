@@ -57,13 +57,13 @@ def test_swap_gas(
         chain.sleep(3600)
 
     # perform swaps between each underlying coin
-    print('aETHx Pool balance, aETH: %s, ETHx: %s' % (wrapped_coins[0].balanceOf(swap.address) / (10 ** 18), wrapped_coins[1].balanceOf(swap.address) / (10 ** 18)))
-    print('ETHx Pool balance, ETH: %s, stETH: %s, frxETH: %s, rETH: %s' % (base_swap.balance() / (10 ** 18), underlying_coins[2].balanceOf(base_swap.address) / (10 ** 18), underlying_coins[3].balanceOf(base_swap.address) / (10 ** 18), underlying_coins[4].balanceOf(base_swap.address) / (10 ** 18)))
+    # print('aETHx Pool balance, aETH: %s, ETHx: %s' % (wrapped_coins[0].balanceOf(swap.address) / (10 ** 18), wrapped_coins[1].balanceOf(swap.address) / (10 ** 18)))
+    # print('ETHx Pool balance, ETH: %s, stETH: %s, frxETH: %s, rETH: %s' % (base_swap.balance() / (10 ** 18), underlying_coins[2].balanceOf(base_swap.address) / (10 ** 18), underlying_coins[3].balanceOf(base_swap.address) / (10 ** 18), underlying_coins[4].balanceOf(base_swap.address) / (10 ** 18)))
     if hasattr(swap, "exchange_underlying"):
         for send, recv in itertools.permutations(range(n_coins), 2):
             amount = 10 ** underlying_decimals[send]
 
-            print('underlying_coins, send: %s (%s), recv: %s (%s). amount: %s' % (send, underlying_coins[send], recv, underlying_coins[recv], amount / (10 ** 18)))
+            # print('underlying_coins, send: %s (%s), recv: %s (%s). amount: %s' % (send, underlying_coins[send], recv, underlying_coins[recv], amount / (10 ** 18)))
             if underlying_coins[send] != ETH_ADDRESS:
                 underlying_coins[send]._mint_for_testing(bob, amount + 1, {"from": bob})
             if underlying_coins[recv] != ETH_ADDRESS:
@@ -101,16 +101,19 @@ def test_zap_gas(
     chain, alice, zap, pool_token, underlying_decimals, initial_amounts_underlying, approve_zap,
 ):
     n_coins = len(initial_amounts_underlying)
+    eth_coin_idx = 1
 
     # add liquidity balanced
-    zap.add_liquidity([i // 2 for i in initial_amounts_underlying], 0, {"from": alice})
+    value = initial_amounts_underlying[eth_coin_idx] // 2
+    zap.add_liquidity([i // 2 for i in initial_amounts_underlying], 0, {"from": alice, "value": value})
     chain.sleep(3600)
 
     # add liquidity imbalanced
     for idx in range(n_coins):
         amounts = [i // 10 for i in initial_amounts_underlying]
         amounts[idx] = 0
-        zap.add_liquidity(amounts, 0, {"from": alice})
+        # print('zap.add_liquidity, amounts: %s, value: %s' % (amounts, amounts[eth_coin_idx]))
+        zap.add_liquidity(amounts, 0, {"from": alice, "value": amounts[eth_coin_idx]})
         chain.sleep(3600)
 
     # remove liquidity balanced
