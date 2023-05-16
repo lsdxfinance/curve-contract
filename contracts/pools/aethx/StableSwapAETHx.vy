@@ -713,7 +713,23 @@ def exchange_underlying(i: int128, j: int128, _dx: uint256, _min_dy: uint256) ->
             dy = self.balance - dy
         else:
             dy = ERC20(output_coin).balanceOf(self)
-            CurvePool(base_pool).exchange(base_i, base_j, dx_w_fee, _min_dy)
+            if input_coin == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:
+                _response: Bytes[32] = raw_call(
+                    base_pool,
+                    _abi_encode(
+                        convert(base_i, bytes32),
+                        convert(base_j, bytes32),
+                        convert(dx_w_fee, bytes32),
+                        convert(_min_dy, bytes32),
+                        method_id=method_id("exchange(int128,int128,uint256,uint256)"),
+                    ),
+                    value=dx_w_fee,
+                    max_outsize=32,
+                )
+                if len(_response) > 0:
+                    assert convert(_response, bool)
+            else:
+                CurvePool(base_pool).exchange(base_i, base_j, dx_w_fee, _min_dy)
             dy = ERC20(output_coin).balanceOf(self) - dy
 
     if output_coin == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:

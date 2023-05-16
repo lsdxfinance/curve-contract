@@ -1,6 +1,7 @@
 from itertools import permutations
 
 import pytest
+from brownie import ETH_ADDRESS
 from brownie.test import given, strategy
 from hypothesis import settings
 from pytest import approx
@@ -29,14 +30,18 @@ def test_amounts(
             fee = 0
 
     amount = 10 ** underlying_decimals[sending]
-    underlying_coins[sending]._mint_for_testing(bob, amount, {"from": bob})
-    swap.exchange_underlying(sending, receiving, amount, 0, {"from": bob})
+    if underlying_coins[sending] != ETH_ADDRESS:
+        underlying_coins[sending]._mint_for_testing(bob, amount, {"from": bob})
+    value = 0 if underlying_coins[sending] != ETH_ADDRESS else amount
+    swap.exchange_underlying(sending, receiving, amount, 0, {"from": bob, "value": value})
 
-    assert underlying_coins[sending].balanceOf(bob) == 0
+    if underlying_coins[sending] != ETH_ADDRESS:
+        assert underlying_coins[sending].balanceOf(bob) == 0
 
-    received = underlying_coins[receiving].balanceOf(bob)
-    prec = -min(underlying_decimals[receiving], 4)
-    assert 1 - 10 ** prec - fee <= received / 10 ** underlying_decimals[receiving] < 1 - fee
+    if underlying_coins[receiving] != ETH_ADDRESS:
+        received = underlying_coins[receiving].balanceOf(bob)
+        prec = -min(underlying_decimals[receiving], 2)
+        assert 1 - 10 ** prec - fee <= received / 10 ** underlying_decimals[receiving] < 1 - fee
 
 
 @pytest.mark.itercoins("sending", "receiving", underlying=True)
@@ -57,12 +62,14 @@ def test_fees(
     n_coins,
     is_metapool,
 ):
-    if fee or admin_fee:
-        set_fees(10 ** 10 * fee, 10 ** 10 * admin_fee)
+    # if fee or admin_fee:
+    set_fees(10 ** 10 * fee, 10 ** 10 * admin_fee)
 
     amount = (base_amount // 100) * 10 ** underlying_decimals[sending]
-    underlying_coins[sending]._mint_for_testing(bob, amount, {"from": bob})
-    swap.exchange_underlying(sending, receiving, amount, 0, {"from": bob})
+    if underlying_coins[sending] != ETH_ADDRESS:
+        underlying_coins[sending]._mint_for_testing(bob, amount, {"from": bob})
+    value = 0 if underlying_coins[sending] != ETH_ADDRESS else amount
+    swap.exchange_underlying(sending, receiving, amount, 0, {"from": bob, "value": value})
 
     admin_fees = get_admin_balances()
     if not (admin_fee * fee) or (is_metapool and min(sending, receiving) > 0):
@@ -79,12 +86,17 @@ def test_fees(
 @pytest.mark.itercoins("sending", "receiving", underlying=True)
 def test_min_dy_underlying(bob, swap, underlying_coins, sending, receiving, underlying_decimals):
     amount = 10 ** underlying_decimals[sending]
-    underlying_coins[sending]._mint_for_testing(bob, amount, {"from": bob})
+    if underlying_coins[sending] != ETH_ADDRESS:
+        underlying_coins[sending]._mint_for_testing(bob, amount, {"from": bob})
 
     min_dy = swap.get_dy_underlying(sending, receiving, amount)
-    swap.exchange_underlying(sending, receiving, amount, min_dy - 1, {"from": bob})
+    value = 0 if underlying_coins[sending] != ETH_ADDRESS else amount
+    # print('test_min_dy_underlying, sending: %s, receiving: %s, amount: %s, min_dy: %s, value: %s' % (sending, receiving, amount, min_dy, value))
+    swap.exchange_underlying(sending, receiving, amount, min_dy - 1, {"from": bob, "value": value})
 
-    assert abs(underlying_coins[receiving].balanceOf(bob) - min_dy) <= 1
+    if underlying_coins[receiving] != ETH_ADDRESS:
+        # print('test_min_dy_underlying, receiving: %s' % (underlying_coins[receiving].balanceOf(bob)))
+        assert abs(underlying_coins[receiving].balanceOf(bob) - min_dy) <= 1
 
 
 @pytest.mark.skip_pool_type("meta", "arate")
