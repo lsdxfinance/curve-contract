@@ -1,4 +1,5 @@
 {
+    "name": "aethx",
     "base_pool": "ethx",
     "pool_types": ["meta"],
     "wrapped_contract": "aETH",
@@ -19,11 +20,9 @@
     "coins": [
         {
             "name": "ankrETH",
-            "decimals": 18,
             "wrapped_decimals": 18,
             "tethered": false,
-            "wrapped_address": "0xe95a203b1a91a908f9b9ce46459d101078c2c3cb",
-            "underlying_address": "0xe95a203b1a91a908f9b9ce46459d101078c2c3cb"
+            "wrapped_address": "0xe95a203b1a91a908f9b9ce46459d101078c2c3cb"
         },
         {
             "name": "ETHx",

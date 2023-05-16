@@ -236,32 +236,10 @@ def A_precise() -> uint256:
 
 @view
 @internal
-def get_ethx_rate() -> uint256:
-    """
-    @notice Calculate the exchange rate for 1 ETHx -> ETH
-    @return The exchange rate of 1 ETHx in ETH
-    """
-    ethx_total_supply: uint256 = ERC20(self.lp_token).totalSupply()
-    if ethx_total_supply == 0:
-        return 1 * PRECISION
-
-    eth_balance: uint256 = CurvePool(self.base_pool).balances(0)
-    steth_balance: uint256 = CurvePool(self.base_pool).balances(1)
-    frxeth_balance: uint256 = CurvePool(self.base_pool).balances(2)
-    reth_balance: uint256 = CurvePool(self.base_pool).balances(3)
-
-    reth: address = CurvePool(self.base_pool).coins(3)
-    reth_exchange_rate: uint256 = rETH(reth).getExchangeRate()
-
-    return (PRECISION * (eth_balance + steth_balance + frxeth_balance) + reth_balance * reth_exchange_rate) / ethx_total_supply
-
-
-@view
-@internal
 def _stored_rates() -> uint256[N_COINS]:
     return [
         PRECISION * PRECISION / aETH(self.coins[0]).ratio(),
-        self.get_ethx_rate()
+        CurvePool(self.base_pool).get_virtual_price()
     ]
 
 

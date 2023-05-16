@@ -29,7 +29,7 @@ def test_admin_balances(alice, bob, swap, wrapped_coins, initial_amounts, sendin
 
 @pytest.mark.itercoins("sending", "receiving")
 def test_withdraw_one_coin(
-    alice, bob, swap, wrapped_coins, sending, receiving, initial_amounts, get_admin_balances
+    alice, bob, pool_data, swap, wrapped_coins, sending, receiving, initial_amounts, get_admin_balances
 ):
 
     value = 0
@@ -43,7 +43,10 @@ def test_withdraw_one_coin(
     assert admin_balances[receiving] > 0
     assert sum(admin_balances) == admin_balances[receiving]
 
-    swap.withdraw_admin_fees({"from": alice})
+    if pool_data.get("name", None) == 'aethx':
+        swap.withdraw_admin_fees(alice.address, {"from": alice})
+    else:
+        swap.withdraw_admin_fees({"from": alice})
 
     if wrapped_coins[receiving] == ETH_ADDRESS:
         assert alice.balance() == admin_balances[receiving]
@@ -54,7 +57,7 @@ def test_withdraw_one_coin(
 
 
 def test_withdraw_all_coins(
-    alice, bob, swap, wrapped_coins, initial_amounts, get_admin_balances, n_coins
+    alice, bob, pool_data, swap, wrapped_coins, initial_amounts, get_admin_balances, n_coins
 ):
     for send, recv in zip(range(n_coins), list(range(1, n_coins)) + [0]):
         value = initial_amounts[send] if wrapped_coins[send] == ETH_ADDRESS else 0
@@ -62,7 +65,10 @@ def test_withdraw_all_coins(
 
     admin_balances = get_admin_balances()
 
-    swap.withdraw_admin_fees({"from": alice})
+    if pool_data.get("name", None) == 'aethx':
+        swap.withdraw_admin_fees(alice.address, {"from": alice})
+    else:
+        swap.withdraw_admin_fees({"from": alice})
 
     for balance, coin in zip(admin_balances, wrapped_coins):
         if coin == ETH_ADDRESS:
@@ -71,6 +77,9 @@ def test_withdraw_all_coins(
             assert coin.balanceOf(alice) == balance
 
 
-def test_withdraw_only_owner(bob, swap):
+def test_withdraw_only_owner(bob, pool_data, swap):
     with brownie.reverts():
-        swap.withdraw_admin_fees({"from": bob})
+        if pool_data.get("name", None) == 'aethx':
+            swap.withdraw_admin_fees(bob.address, {"from": bob})
+        else:
+            swap.withdraw_admin_fees({"from": bob})

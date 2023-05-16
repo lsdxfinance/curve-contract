@@ -20,12 +20,13 @@ class StateMachine:
     st_pct = strategy("decimal", min_value="0.5", max_value="1", places=2)
     st_rates = strategy("decimal[8]", min_value="1.001", max_value="1.004", places=4, unique=True)
 
-    def __init__(cls, alice, swap, wrapped_coins, wrapped_decimals):
+    def __init__(cls, alice, swap, wrapped_coins, wrapped_decimals, underlying_coins):
         cls.alice = alice
         cls.swap = swap
         cls.coins = wrapped_coins
         cls.decimals = wrapped_decimals
         cls.n_coins = len(wrapped_coins)
+        cls.underlying_coins = underlying_coins
 
     def setup(self):
         # reset the virtual price between each test run
@@ -81,7 +82,8 @@ class StateMachine:
 
         send, recv = self._min_max()
         amount = int(10 ** self.decimals[send] * st_pct)
-        value = amount if self.coins[send] == ETH_ADDRESS else 0
+        value = amount if self.underlying_coins[send] == ETH_ADDRESS else 0
+        # print('rule_exchange_underlying, underlying_coins: %s, send: %s, recv: %s, amount: %s, value: %s' % (self.underlying_coins, send, recv, amount, value))
         self.swap.exchange_underlying(send, recv, amount, 0, {"from": self.alice, "value": value})
 
     def rule_remove_one_coin(self, st_pct):
@@ -140,6 +142,7 @@ def test_number_always_go_up(
     set_fees,
 ):
     set_fees(10 ** 7, 0)
+    # print('test_number_always_go_up, wrapped_coins: %s, underlying_coins: %s' %(wrapped_coins, underlying_coins))
 
     for underlying, wrapped in zip(underlying_coins, wrapped_coins):
         amount = 10 ** 18 * base_amount
@@ -156,5 +159,6 @@ def test_number_always_go_up(
         swap,
         wrapped_coins,
         wrapped_decimals,
+        underlying_coins,
         settings={"max_examples": 25, "stateful_step_count": 50},
     )

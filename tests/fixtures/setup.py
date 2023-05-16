@@ -8,6 +8,7 @@ def _add_liquidity(acct, swap, coins, amounts):
     eth_value = 0
     if ETH_ADDRESS in coins:
         eth_value = amounts[coins.index(ETH_ADDRESS)]
+    # print('add_liquidity, coins: %s, amounts: %s, value: %s' % (coins, amounts, eth_value))
     swap.add_liquidity(amounts, 0, {"from": acct, "value": eth_value})
 
 
@@ -42,10 +43,11 @@ def _approve(owner, spender, *coins):
 
 @pytest.fixture(scope="module")
 def add_initial_liquidity(
-    alice, mint_alice, approve_alice, underlying_coins, swap, initial_amounts
+    alice, mint_alice, approve_alice, wrapped_coins, swap, initial_amounts
 ):
     # mint (10**7 * precision) of each coin in the pool
-    _add_liquidity(alice, swap, underlying_coins, initial_amounts)
+    # print('add_initial_liquidity, coins: %s, amounts: %s' % (wrapped_coins, initial_amounts))
+    _add_liquidity(alice, swap, wrapped_coins, initial_amounts)
 
 
 @pytest.fixture(scope="module")
@@ -111,4 +113,6 @@ def _add_base_pool_liquidity(
     initial_amounts = [10 ** i * base_amount * 2 for i in decimals]
     _mint(charlie, _base_coins, initial_amounts, [], [], is_forked)
     _approve(charlie, base_swap, _base_coins)
+    
+    # print('_add_base_pool_liquidity, coins: %s, amounts: %s' % (_base_coins, initial_amounts))
     _add_liquidity(charlie, base_swap, _base_coins, initial_amounts)

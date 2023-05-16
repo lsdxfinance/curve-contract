@@ -60,7 +60,8 @@ def test_add_liquidity_insufficient_balance(
     # attempt to perform swaps between coins with insufficient funds
     if hasattr(swap, "exchange_underlying"):
         for send, recv in itertools.permutations(range(n_coins), 2):
-            assert underlying_coins[send].balanceOf(charlie) == 0
+            if underlying_coins[send] != ETH_ADDRESS:
+                assert underlying_coins[send].balanceOf(charlie) == 0
             amount = initial_amounts[send] // 4
             with brownie.reverts():
                 swap.exchange_underlying(send, recv, amount, 0, {"from": charlie})
