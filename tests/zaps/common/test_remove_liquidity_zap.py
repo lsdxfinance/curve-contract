@@ -55,6 +55,8 @@ def test_underlying_balances(
     expected = [i // divisor for i in initial_amounts_underlying]
 
     for coin, amount, initial in zip(underlying_coins, expected, initial_amounts_underlying):
+        if coin == brownie.ETH_ADDRESS:
+            continue
         if coin not in wrapped_coins:
             assert coin.balanceOf(swap) == 0
         else:

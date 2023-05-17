@@ -174,11 +174,11 @@ def remove_liquidity(_amount: uint256, min_amounts: uint256[N_ALL_COINS]) -> uin
             coin = self.base_coins[i - MAX_COIN]
 
         if coin == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:
-            amount: uint256 = self.balance
-            raw_call(msg.sender, b"", value=amount)
+            amounts[i] = self.balance
+            raw_call(msg.sender, b"", value=amounts[i])
         else:
-            amount: uint256 = ERC20(coin).balanceOf(self)
-            assert ERC20(coin).transfer(msg.sender, amount)
+            amounts[i] = ERC20(coin).balanceOf(self)
+            assert ERC20(coin).transfer(msg.sender, amounts[i])
 
     return amounts
 

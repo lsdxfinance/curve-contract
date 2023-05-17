@@ -36,7 +36,8 @@ class StateMachine:
         # approve base pool for swaps
         base_coins = cls.underlying_coins[cls.n_coins - 1 :]
         for idx in range(len(base_coins)):
-            base_coins[idx].approve(cls.base_swap, 2 ** 256 - 1, {"from": cls.alice})
+            if base_coins[idx] != ETH_ADDRESS:
+                base_coins[idx].approve(cls.base_swap, 2 ** 256 - 1, {"from": cls.alice})
 
     def setup(self):
         # reset the virtual price between each test run
@@ -101,7 +102,8 @@ class StateMachine:
             if i < self.n_coins - 1:
                 continue
             amount = int(10 ** self.underlying_decimals[i] * (1 + st_pct))
-            coin._mint_for_testing(self.base_swap, amount, {"from": self.alice})
+            if coin != ETH_ADDRESS:
+                coin._mint_for_testing(self.base_swap, amount, {"from": self.alice})
         self.base_swap.donate_admin_fees()
 
     def rule_exchange(self, st_pct):
@@ -111,8 +113,7 @@ class StateMachine:
         send, recv = self._min_max()
 
         amount = int(10 ** self.decimals[send] * st_pct)
-        value = amount if self.underlying_coins[send] == ETH_ADDRESS else 0
-        self.swap.exchange(send, recv, amount, 0, {"from": self.alice, "value": value})
+        self.swap.exchange(send, recv, amount, 0, {"from": self.alice})
 
     def rule_generate_fees(self):
         """
@@ -128,11 +129,14 @@ class StateMachine:
             dx = dx * 10 ** (base_decimals[min_idx] - base_decimals[max_idx])
 
         base_coins = self.underlying_coins[self.n_coins - 1 :]
-        base_coins[min_idx]._mint_for_testing(self.alice, dx, {"from": self.alice})
+        if base_coins[min_idx] != ETH_ADDRESS:
+            base_coins[min_idx]._mint_for_testing(self.alice, dx, {"from": self.alice})
 
-        tx = self.base_swap.exchange(min_idx, max_idx, dx, 0, {"from": self.alice})
+        value = 0 if base_coins[min_idx] != ETH_ADDRESS else dx
+        tx = self.base_swap.exchange(min_idx, max_idx, dx, 0, {"from": self.alice, "value": value})
         dy = tx.events["TokenExchange"]["tokens_bought"]
-        self.base_swap.exchange(max_idx, min_idx, dy, 0, {"from": self.alice})
+        value = 0 if base_coins[max_idx] != ETH_ADDRESS else dy
+        self.base_swap.exchange(max_idx, min_idx, dy, 0, {"from": self.alice, "value": value})
 
     def rule_exchange_underlying(self, st_pct):
         """

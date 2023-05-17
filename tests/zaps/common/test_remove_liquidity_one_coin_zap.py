@@ -14,6 +14,8 @@ pytestmark = [
 def test_remove_one(alice, bob, zap, underlying_coins, wrapped_coins, pool_token, idx, divisor):
     underlying = underlying_coins[idx]
     wrapped = wrapped_coins[idx]
+    if underlying == brownie.ETH_ADDRESS:
+        return
 
     initial_amount = pool_token.balanceOf(alice)
     amount = initial_amount // divisor

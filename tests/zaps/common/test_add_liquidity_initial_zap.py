@@ -5,20 +5,28 @@ pytestmark = pytest.mark.usefixtures("mint_bob", "approve_zap")
 
 
 def test_lp_token_balances(
-    bob, zap, swap, pool_token, base_pool_token, initial_amounts_underlying, base_amount, n_coins
+    bob, zap, swap, pool_token, pool_data, base_pool_token, initial_amounts_underlying, base_amount, n_coins
 ):
-    zap.add_liquidity(initial_amounts_underlying, 0, {"from": bob})
+    if pool_data.get("name", None) == 'aethx':
+        zap.add_liquidity(initial_amounts_underlying, 0, {"from": bob, "value": initial_amounts_underlying[1]})
+    else:
+        zap.add_liquidity(initial_amounts_underlying, 0, {"from": bob})
 
     assert 0.9999 < pool_token.balanceOf(bob) / (n_coins * 10 ** 18 * base_amount) <= 1
     assert pool_token.totalSupply() == pool_token.balanceOf(bob)
 
 
 def test_underlying_balances(
-    bob, zap, swap, underlying_coins, wrapped_coins, initial_amounts_underlying
+    bob, zap, swap, pool_data, underlying_coins, wrapped_coins, initial_amounts_underlying
 ):
-    zap.add_liquidity(initial_amounts_underlying, 0, {"from": bob})
+    if pool_data.get("name", None) == 'aethx':
+        zap.add_liquidity(initial_amounts_underlying, 0, {"from": bob, "value": initial_amounts_underlying[1]})
+    else:
+        zap.add_liquidity(initial_amounts_underlying, 0, {"from": bob})
 
     for coin, amount in zip(underlying_coins, initial_amounts_underlying):
+        if coin == brownie.ETH_ADDRESS:
+            continue
         assert coin.balanceOf(zap) == 0
         if coin in wrapped_coins:
             assert coin.balanceOf(swap) == amount
@@ -27,9 +35,12 @@ def test_underlying_balances(
 
 
 def test_wrapped_balances(
-    bob, zap, swap, wrapped_coins, initial_amounts_underlying, initial_amounts
+    bob, zap, pool_data, swap, wrapped_coins, initial_amounts_underlying, initial_amounts
 ):
-    zap.add_liquidity(initial_amounts_underlying, 0, {"from": bob})
+    if pool_data.get("name", None) == 'aethx':
+        zap.add_liquidity(initial_amounts_underlying, 0, {"from": bob, "value": initial_amounts_underlying[1]})
+    else:
+        zap.add_liquidity(initial_amounts_underlying, 0, {"from": bob})
 
     for coin, amount in zip(wrapped_coins, initial_amounts):
         assert coin.balanceOf(zap) == 0

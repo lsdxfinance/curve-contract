@@ -1,3 +1,4 @@
+import brownie
 import pytest
 
 
@@ -74,6 +75,9 @@ def test_underlying_balances(
     zap.remove_liquidity_imbalance(amounts, max_burn + 1, {"from": bob})
 
     for coin, amount, initial in zip(underlying_coins, amounts, initial_amounts_underlying):
+        if coin == brownie.ETH_ADDRESS:
+            continue
+
         if coin not in wrapped_coins:
             assert coin.balanceOf(swap) == 0
         else:

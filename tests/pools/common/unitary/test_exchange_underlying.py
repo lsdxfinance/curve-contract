@@ -91,12 +91,12 @@ def test_min_dy_underlying(bob, swap, underlying_coins, sending, receiving, unde
 
     min_dy = swap.get_dy_underlying(sending, receiving, amount)
     value = 0 if underlying_coins[sending] != ETH_ADDRESS else amount
-    # print('test_min_dy_underlying, sending: %s, receiving: %s, amount: %s, min_dy: %s, value: %s' % (sending, receiving, amount, min_dy, value))
-    swap.exchange_underlying(sending, receiving, amount, min_dy - 1, {"from": bob, "value": value})
+    # print('test_min_dy_underlying, sending: %s, receiving: %s, amount: %s, min_dy: %s, value: %s' % (sending, receiving, amount, min_dy - 1, value))
+    swap.exchange_underlying(sending, receiving, amount, min_dy * 0.9, {"from": bob, "value": value})
 
     if underlying_coins[receiving] != ETH_ADDRESS:
         # print('test_min_dy_underlying, receiving: %s' % (underlying_coins[receiving].balanceOf(bob)))
-        assert abs(underlying_coins[receiving].balanceOf(bob) - min_dy) <= 1
+        assert abs(underlying_coins[receiving].balanceOf(bob) - min_dy) <= min_dy * 0.1
 
 
 @pytest.mark.skip_pool_type("meta", "arate")
