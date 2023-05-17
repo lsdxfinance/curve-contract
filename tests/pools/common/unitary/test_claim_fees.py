@@ -43,7 +43,7 @@ def test_withdraw_one_coin(
     assert admin_balances[receiving] > 0
     assert sum(admin_balances) == admin_balances[receiving]
 
-    if pool_data.get("name", None) == 'aethx':
+    if pool_data.get("name", None) == 'aethx' or pool_data.get("name", None) == 'rethx':
         swap.withdraw_admin_fees(alice.address, {"from": alice})
     else:
         swap.withdraw_admin_fees({"from": alice})
@@ -65,7 +65,7 @@ def test_withdraw_all_coins(
 
     admin_balances = get_admin_balances()
 
-    if pool_data.get("name", None) == 'aethx':
+    if pool_data.get("name", None) == 'aethx' or pool_data.get("name", None) == 'rethx':
         swap.withdraw_admin_fees(alice.address, {"from": alice})
     else:
         swap.withdraw_admin_fees({"from": alice})
@@ -79,7 +79,7 @@ def test_withdraw_all_coins(
 
 def test_withdraw_only_owner(bob, pool_data, swap):
     with brownie.reverts():
-        if pool_data.get("name", None) == 'aethx':
+        if pool_data.get("name", None) == 'aethx' or pool_data.get("name", None) == 'rethx':
             swap.withdraw_admin_fees(bob.address, {"from": bob})
         else:
             swap.withdraw_admin_fees({"from": bob})

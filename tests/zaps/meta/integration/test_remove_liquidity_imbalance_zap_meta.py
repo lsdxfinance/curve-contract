@@ -14,7 +14,7 @@ def setup(alice, bob, pool_token, add_initial_liquidity, approve_zap, set_fees):
     st_zap=strategy("decimal[4]", min_value=0, max_value="0.99", unique=True, places=2),
 )
 @settings(max_examples=100)
-@pytest.mark.skip_pool("aethx")
+@pytest.mark.skip_pool("aethx", "rethx")
 def test_remove_liquidity_imbalance(
     bob, charlie, zap, pool_token, initial_amounts_underlying, base_swap, swap, st_base, st_zap
 ):

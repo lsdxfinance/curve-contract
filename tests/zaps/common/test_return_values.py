@@ -39,7 +39,7 @@ def test_remove_one(alice, bob, zap, underlying_coins, wrapped_coins, pool_token
 
 
 def test_add_liquidity(bob, zap, initial_amounts_underlying, pool_data, pool_token, mint_bob):
-    if pool_data.get("name", None) == 'aethx':
+    if pool_data.get("name", None) == 'aethx' or pool_data.get("name", None) == 'rethx':
         tx = zap.add_liquidity(initial_amounts_underlying, 0, {"from": bob, "value": initial_amounts_underlying[1]})
     else:
         tx = zap.add_liquidity(initial_amounts_underlying, 0, {"from": bob})
