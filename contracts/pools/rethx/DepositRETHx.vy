@@ -1,6 +1,6 @@
 # @version 0.2.16
 """
-@title "Zap" Depositer for ankrETH/ETHx pool
+@title Zap Depositer for rETH/ETHx Metapool
 """
 
 from vyper.interfaces import ERC20

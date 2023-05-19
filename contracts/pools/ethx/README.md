@@ -32,6 +32,6 @@ $ brownie run deploy_ethx --network <mainnet-fork | goerli | mainnet>
 
 ### Goerli
 
-- ETHx: 0x1655A0180472545680f8C51aEe53B0B49addb3E7
+- ETHx: 0xF4C911C395DB0b993AD2909c0135cbd4D31D89CA
 
-- StableSwapETHxPool: 0xAe88246F808076F334C24EB68841Fb054db3544e
+- StableSwapETHxPool: 0x3f1bE9EE10024EE5D3463eE0b407e56A1cC2E45E
