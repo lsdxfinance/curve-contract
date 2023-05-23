@@ -100,7 +100,7 @@ def test_revert_without_commit(alice, swap):
 
 def test_withdraw_only_owner(bob, swap, pool_data):
     with brownie.reverts():
-        if pool_data.get("name", None) == 'aethx' or pool_data.get("name", None) == 'rethx':
+        if pool_data.get("name", None) == 'aethx' or pool_data.get("name", None) == 'rethx' or pool_data.get("name", None) == 'wbethx':
             swap.withdraw_admin_fees(bob, {"from": bob})
         else:
             swap.withdraw_admin_fees({"from": bob})

@@ -1,13 +1,13 @@
 # @version 0.2.16
 """
-@title ankrETH/ETHx Metapool
-@dev Utilizes 5Pool to allow swaps between ankrETH / ETH / stETH / frxETH / rETH
+@title wBETH/ETHx Metapool
+@dev Utilizes 5Pool to allow swaps between wBETH / ETH / stETH / frxETH / rETH (Rocketpool)
 """
 
 from vyper.interfaces import ERC20
 
-interface aETH:
-    def ratio() -> uint256: view
+interface wBETH:
+    def exchangeRate() -> uint256: view
 
 interface CurveToken:
     def totalSupply() -> uint256: view
@@ -228,7 +228,7 @@ def A_precise() -> uint256:
 @internal
 def _stored_rates() -> uint256[N_COINS]:
     return [
-        PRECISION * PRECISION / aETH(self.coins[0]).ratio(),
+        PRECISION * PRECISION / wBETH(self.coins[0]).exchangeRate(),
         CurvePool(self.base_pool).get_virtual_price()
     ]
 

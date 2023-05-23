@@ -106,7 +106,6 @@ MAX_COIN: constant(int128) = N_COINS - 1
 FEE_DENOMINATOR: constant(uint256) = 10 ** 10
 PRECISION: constant(uint256) = 10 ** 18  # The precision to convert to
 PRECISION_MUL: constant(uint256[N_COINS]) = [1, 1]
-RATES: constant(uint256[N_COINS]) = [1000000000000000000, 1000000000000000000]
 
 BASE_N_COINS: constant(int128) = 4
 N_ALL_COINS: constant(int128) = N_COINS + BASE_N_COINS - 1
@@ -130,11 +129,7 @@ admin_fee: public(uint256)  # admin_fee * 1e10
 owner: public(address)
 lp_token: public(address)
 
-# Token corresponding to the pool is always the last one
-BASE_CACHE_EXPIRES: constant(int128) = 10 * 60  # 10 min
 base_pool: public(address)
-base_virtual_price: public(uint256)
-base_cache_updated: public(uint256)
 base_coins: public(address[BASE_N_COINS])
 
 A_PRECISION: constant(uint256) = 100
@@ -186,8 +181,6 @@ def __init__(
     self.lp_token = _pool_token
 
     self.base_pool = _base_pool
-    self.base_virtual_price = CurvePool(_base_pool).get_virtual_price()
-    self.base_cache_updated = block.timestamp
     for i in range(BASE_N_COINS):
         base_coin: address = CurvePool(_base_pool).coins(i)
         self.base_coins[i] = base_coin
