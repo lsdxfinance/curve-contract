@@ -571,6 +571,7 @@ def exchange(i: int128, j: int128, dx: uint256, min_dy: uint256) -> uint256:
     admin_fee: uint256 = self.admin_fee
     if admin_fee != 0:
         dy_admin_fee: uint256 = dy_fee * admin_fee / FEE_DENOMINATOR
+        dy_admin_fee = dy_admin_fee * PRECISION / rates[j]
         if dy_admin_fee != 0:
             self.admin_balances[j] += dy_admin_fee
 
@@ -679,6 +680,7 @@ def exchange_underlying(i: int128, j: int128, _dx: uint256, _min_dy: uint256) ->
         admin_fee: uint256 = self.admin_fee
         if admin_fee != 0:
             dy_admin_fee: uint256 = dy_fee * admin_fee / FEE_DENOMINATOR
+            dy_admin_fee = dy_admin_fee * PRECISION / rates[meta_j]
             if dy_admin_fee != 0:
                 self.admin_balances[meta_j] += dy_admin_fee
 
@@ -1051,7 +1053,7 @@ def withdraw_admin_fees(to: address):
     for i in range(N_COINS):
         amount: uint256 = self.admin_balances[i]
         if amount != 0:
-            assert ERC20(self.coins[i]).transfer(msg.sender, amount)
+            assert ERC20(self.coins[i]).transfer(to, amount)
             log WithdrawAdminFee(to, self.coins[i], amount)
 
     self.admin_balances = empty(uint256[N_COINS])
