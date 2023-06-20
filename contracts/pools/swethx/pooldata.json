@@ -1,0 +1,38 @@
+{
+    "name": "swethx",
+    "base_pool": "ethx",
+    "pool_types": ["meta"],
+    "wrapped_contract": "swETH",
+    "lp_contract": "CurveTokenV3",
+    "swap_address": "",
+    "lp_token_address": "",
+    "zap_address": "",
+    "gauge_addresses": [""],
+    "lp_constructor": {
+        "name": "swETH/ETHx Pool",
+        "symbol": "swETHx"
+    },
+    "swap_constructor": {
+        "_base_pool": "0x7b0Eff0C991F0AA880481FdFa5624Cb0BC9b10e1",
+        "_A": 800,
+        "_fee": 0,
+        "_admin_fee": 0
+    },
+    "coins": [
+        {
+            "name": "swETH",
+            "wrapped_decimals": 18,
+            "tethered": false,
+            "wrapped_address": "0xf951E335afb289353dc249e82926178EaC7DEd78"
+        },
+        {
+            "name": "ETHx",
+            "decimals": 18,
+            "base_pool_token": true,
+            "underlying_address": "0x21eAD867C8c5181854f6f8Ce71f75b173d2Bc16A"
+        }
+    ],
+    "testing": {
+        "initial_amount": 10000
+    }
+}
