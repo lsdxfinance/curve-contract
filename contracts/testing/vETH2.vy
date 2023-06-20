@@ -1,6 +1,6 @@
 # @version ^0.2.8
 """
-@notice Mock swETH token
+@notice Mock vETH2 token
 @dev This is for testing only, it is NOT safe for use
 """
 
@@ -80,10 +80,10 @@ def approve(_spender : address, _value : uint256) -> bool:
     return True
 
 
-# swETH-specific function
+# vETH2-specific function
 @view
 @external
-def swETHToETHRate() -> uint256:
+def calculateTokenAmount(amount: uint256) -> uint256:
     rate: uint256 = self.exchangeRateStored
     return rate
 

@@ -17,7 +17,8 @@ WRAPPED_COIN_METHODS = {
     "aETH": {"get_rate": "ratio"},
     "rETH": {"get_rate": "getExchangeRate"},
     "wBETH": {"get_rate": "exchangeRate"},
-    "swETH": {"get_rate": "swETHToETHRate"}
+    "swETH": {"get_rate": "swETHToETHRate"},
+    "vETH2": {"get_rate": "calculateTokenAmount"}
 }
 
 pytest_plugins = [

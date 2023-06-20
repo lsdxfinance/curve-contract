@@ -31,6 +31,8 @@ def _swap(
         _y_pool = swap_mock,
         _aave_lending_pool = aave_lending_pool
     )
+    if pool_data.get("name", None) == 'vethx':
+        args.update(_slp_core = wrapped[0])
     deployment_args = [args[i["name"]] for i in abi] + [({"from": alice})]
 
     contract = deployer.deploy(*deployment_args)

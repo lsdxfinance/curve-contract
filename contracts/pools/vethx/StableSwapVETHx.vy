@@ -1,13 +1,13 @@
 # @version 0.2.16
 """
-@title rETH/ETHx Metapool
-@dev Utilizes 5Pool to allow swaps between rETH / ETH / stETH / frxETH / rETH (Rocketpool)
+@title vETH2/ETHx Metapool
+@dev Utilizes 5Pool to allow swaps between vETH2 / ETH / stETH / frxETH / rETH (Rocketpool)
 """
 
 from vyper.interfaces import ERC20
 
-interface rETH:
-    def getExchangeRate() -> uint256: view
+interface SLPCore:
+    def calculateTokenAmount(vTokenAmount: uint256) -> uint256: view
 
 interface CurveToken:
     def totalSupply() -> uint256: view
@@ -120,6 +120,7 @@ MAX_A_CHANGE: constant(uint256) = 10
 ADMIN_ACTIONS_DELAY: constant(uint256) = 3 * 86400
 MIN_RAMP_TIME: constant(uint256) = 86400
 
+slp_core: public(address)
 coins: public(address[N_COINS])
 admin_balances: public(uint256[N_COINS])
 
@@ -155,6 +156,7 @@ def __init__(
     _coins: address[N_COINS],
     _pool_token: address,
     _base_pool: address,
+    _slp_core: address,
     _A: uint256,
     _fee: uint256,
     _admin_fee: uint256
@@ -165,6 +167,7 @@ def __init__(
     @param _coins Addresses of ERC20 conracts of coins
     @param _pool_token Address of the token representing LP share
     @param _base_pool Address of the base pool (which will have a virtual price)
+    @param _slp_core Address of Bifrost SLPCore contract
     @param _A Amplification coefficient multiplied by n * (n - 1)
     @param _fee Fee to charge for exchanges
     @param _admin_fee Admin fee
@@ -179,6 +182,7 @@ def __init__(
     self.owner = _owner
     self.kill_deadline = block.timestamp + KILL_DEADLINE_DT
     self.lp_token = _pool_token
+    self.slp_core = _slp_core
 
     self.base_pool = _base_pool
     for i in range(BASE_N_COINS):
@@ -228,7 +232,7 @@ def A_precise() -> uint256:
 @internal
 def _stored_rates() -> uint256[N_COINS]:
     return [
-        rETH(self.coins[0]).getExchangeRate(),
+        SLPCore(self.slp_core).calculateTokenAmount(PRECISION),
         CurvePool(self.base_pool).get_virtual_price()
     ]
 

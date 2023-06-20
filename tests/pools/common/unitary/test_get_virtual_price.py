@@ -6,7 +6,7 @@ ETH_ADDRESS = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"
 
 @pytest.fixture(scope="module", autouse=True, params=[1.1, 0.9])
 def setup(
-    chain, alice, wrapped_coins, add_initial_liquidity, approve_bob, mint_bob, set_fees, request
+    chain, alice, pool_data, wrapped_coins, add_initial_liquidity, approve_bob, mint_bob, set_fees, request
 ):
     set_fees(MAX_FEE, MAX_FEE)
 
@@ -17,7 +17,10 @@ def setup(
                 rate_mod += i / 20
             else:
                 rate_mod -= i / 20
-            rate = int(coin.get_rate() * rate_mod)
+            if pool_data.get("name", None) == 'vethx':
+                rate = int(coin.get_rate(10 ** 18) * rate_mod)
+            else:
+                rate = int(coin.get_rate() * rate_mod)
             coin.set_exchange_rate(rate, {"from": alice})
 
     # time travel so rates take effect in pools that use rate caching

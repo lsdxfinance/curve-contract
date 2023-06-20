@@ -1,0 +1,39 @@
+{
+    "name": "vethx",
+    "base_pool": "ethx",
+    "pool_types": ["meta"],
+    "wrapped_contract": "vETH2",
+    "lp_contract": "CurveTokenV3",
+    "swap_address": "",
+    "lp_token_address": "",
+    "zap_address": "",
+    "gauge_addresses": [""],
+    "lp_constructor": {
+        "name": "vETH2/ETHx Pool",
+        "symbol": "vETHx"
+    },
+    "swap_constructor": {
+        "_base_pool": "0x3f1bE9EE10024EE5D3463eE0b407e56A1cC2E45E",
+        "_slp_core": "0x41354fCaDd625e1DB1f166075Ca32cf081B25b35",
+        "_A": 800,
+        "_fee": 0,
+        "_admin_fee": 0
+    },
+    "coins": [
+        {
+            "name": "vETH2",
+            "wrapped_decimals": 18,
+            "tethered": false,
+            "wrapped_address": "0x686F165076a6C6F7cC081084aB64Ba1d92530E35"
+        },
+        {
+            "name": "ETHx",
+            "decimals": 18,
+            "base_pool_token": true,
+            "underlying_address": "0xF4C911C395DB0b993AD2909c0135cbd4D31D89CA"
+        }
+    ],
+    "testing": {
+        "initial_amount": 10000
+    }
+}

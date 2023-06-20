@@ -228,7 +228,7 @@ def A_precise() -> uint256:
 @internal
 def _stored_rates() -> uint256[N_COINS]:
     return [
-        PRECISION * PRECISION / swETH(self.coins[0]).swETHToETHRate(),
+        swETH(self.coins[0]).swETHToETHRate(),
         CurvePool(self.base_pool).get_virtual_price()
     ]
 
