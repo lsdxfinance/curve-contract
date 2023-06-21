@@ -14,7 +14,7 @@
     },
     "swap_constructor": {
         "_base_pool": "0x3f1bE9EE10024EE5D3463eE0b407e56A1cC2E45E",
-        "_slp_core": "0x41354fCaDd625e1DB1f166075Ca32cf081B25b35",
+        "_slp_core": "0x92810f6023FA2485C3778fdd90985dC75660bb63",
         "_A": 800,
         "_fee": 0,
         "_admin_fee": 0
@@ -24,7 +24,7 @@
             "name": "vETH2",
             "wrapped_decimals": 18,
             "tethered": false,
-            "wrapped_address": "0x686F165076a6C6F7cC081084aB64Ba1d92530E35"
+            "wrapped_address": "0x6e2BA9C11ac4e6F3dFA1053c4f9dc1a3B7135c21"
         },
         {
             "name": "ETHx",

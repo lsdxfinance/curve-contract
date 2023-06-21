@@ -3,6 +3,7 @@ import os
 import argparse
 
 from brownie import accounts
+from brownie.network.gas.strategies import LinearScalingStrategy
 from brownie.project.main import get_loaded_projects
 
 def main():
@@ -27,7 +28,9 @@ def main():
     
     tx_params = {
         "from": DEPLOYER,
-        "required_confs": 1
+        "required_confs": 1,
+        "gas_price": LinearScalingStrategy(initial_gas_price = "10 gwei", max_gas_price = "100 gwei", increment=1.125, time_duration=30),
+
     }
 
     project = get_loaded_projects()[0]

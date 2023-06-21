@@ -12,13 +12,16 @@ pytestmark = [
 @pytest.mark.parametrize("rate_mod", [0.9, 0.99, 1.01, 1.1])
 @pytest.mark.skip_pool_type("arate")
 @pytest.mark.skip_pool("ren", "sbtc", "aeth")
-def test_amount_received(chain, alice, swap, wrapped_coins, wrapped_decimals, idx, rate_mod):
+def test_amount_received(chain, alice, pool_data, swap, wrapped_coins, wrapped_decimals, idx, rate_mod):
 
     decimals = wrapped_decimals[idx]
     wrapped = wrapped_coins[idx]
 
     if hasattr(wrapped, "set_exchange_rate"):
-        wrapped.set_exchange_rate(int(wrapped.get_rate() * rate_mod), {"from": alice})
+        if pool_data.get("name", None) == 'vethx':
+            wrapped.set_exchange_rate(int(wrapped.get_rate(10 ** 18) * rate_mod), {"from": alice})
+        else:
+            wrapped.set_exchange_rate(int(wrapped.get_rate() * rate_mod), {"from": alice})
         # time travel so rates take effect in pools that use rate caching
         chain.sleep(3600)
     else:
@@ -47,13 +50,16 @@ def test_lp_token_balance(alice, swap, pool_token, idx, divisor, n_coins, base_a
 @pytest.mark.itercoins("idx")
 @pytest.mark.parametrize("rate_mod", [0.9, 1.1])
 def test_expected_vs_actual(
-    chain, alice, swap, wrapped_coins, pool_token, n_coins, idx, rate_mod, base_amount
+    chain, alice, pool_data, swap, wrapped_coins, pool_token, n_coins, idx, rate_mod, base_amount
 ):
     amount = pool_token.balanceOf(alice) // 10
     wrapped = wrapped_coins[idx]
 
     if hasattr(wrapped, "set_exchange_rate"):
-        wrapped.set_exchange_rate(int(wrapped.get_rate() * rate_mod), {"from": alice})
+        if pool_data.get("name", None) == 'vethx':
+            wrapped.set_exchange_rate(int(wrapped.get_rate(10 ** 18) * rate_mod), {"from": alice})
+        else:
+            wrapped.set_exchange_rate(int(wrapped.get_rate() * rate_mod), {"from": alice})
         # time travel so rates take effect in pools that use rate caching
         chain.sleep(3600)
         chain.mine()
