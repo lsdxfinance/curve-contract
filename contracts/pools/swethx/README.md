@@ -1,4 +1,4 @@
-# ETHx Pool
+# swETHx Pool
 
 ## Prepare .env file
 
@@ -32,8 +32,8 @@ $ brownie run deploy_swethx --network <goerli | mainnet>
 
 ### Goerli
 
-- swETHx: 0x1DcA1f11d85C5Bd2C272abAB4D21DB1ee2fB255f
+- swETHx: 0x1B99Ad576AF352A8BF02397AA4A6860E44DE7690
 
-- StableSwapSWETHx: 0x16a097f539942d48F6e10bbE1903735d2305d5D9
+- StableSwapSWETHx: 0xa804Acaf123BAb88e2D2D6fa6D0B2EE316DA3F45
 
-- DepositSWETHx: 0x8d2578387Cb564CBDB605a590b39Fe4c2c3a58A6
+- DepositSWETHx: 0xFa68d86197Df51F34Ac5290bbc8658FD57f3B761

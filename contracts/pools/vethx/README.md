@@ -1,4 +1,4 @@
-# ETHx Pool
+# vETHx Pool
 
 ## Prepare .env file
 
@@ -32,8 +32,8 @@ $ brownie run deploy_vethx --network <goerli | mainnet>
 
 ### Goerli
 
-- vETHx: 0xc315960A68075872B7b9971eDC4b1ef3fb208ae4
+- vETHx: 0x0Ad7d395A9E2bD403a64F9fe208Bf77B5A46551B
 
-- StableSwapVETHx: 0x792e4dd07D115D45ac7cc2F47f48244ad4Ab1C60
+- StableSwapVETHx: 0x96f432e7b743a6a7fa823ba90485492a36beb3a8
 
-- DepositVETHx: 0x2432487BD79fBd5F960FBd0a2037dB6d6120BA07
+- DepositVETHx: 0xF5204b0c60ad8d47F87380352c0FA4a0c3331371
