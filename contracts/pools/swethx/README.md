@@ -30,6 +30,15 @@ $ brownie run deploy_swethx --network <goerli | mainnet>
 
 ## Deployment Addresses
 
+### Mainnet
+
+- swETHx: 0xB776E073F359B30D8E19B216983D678f281487a6
+
+- StableSwapSWETHx: 0xefD2fCa091e4bA762A7dd7f0F3FBEF8075A7ca12
+
+- DepositSWETHx: 0x6F18d91b2c3e2F4E7B9C6DeCEd5537863aE43F7e
+
+
 ### Goerli
 
 - swETHx: 0x1B99Ad576AF352A8BF02397AA4A6860E44DE7690
