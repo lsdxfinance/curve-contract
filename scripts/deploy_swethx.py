@@ -29,7 +29,7 @@ def main():
     tx_params = {
         "from": DEPLOYER,
         "required_confs": 1,
-        "gas_price": LinearScalingStrategy(initial_gas_price = "30 gwei", max_gas_price = "100 gwei", increment=1.125, time_duration=30),
+        # "gas_price": LinearScalingStrategy(initial_gas_price = "30 gwei", max_gas_price = "100 gwei", increment=1.125, time_duration=30),
 
     }
 
