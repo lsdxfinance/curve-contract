@@ -44,6 +44,6 @@
         }
     ],
     "testing": {
-        "initial_amount": 10000
+        "initial_amount": 100000
     }
 }

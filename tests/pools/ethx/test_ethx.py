@@ -14,20 +14,20 @@ def test_ethx_e2e(alice, bob, swap, wrapped_coins, wrapped_decimals, initial_amo
     assert pool_token.symbol() == 'ETHx'
     assert pool_token.totalSupply() == 0
     
-    # Alice/Bob's initial amounts is 10000 ETH/stETH/frxETH/rETH each (via mint_alice)
+    # Alice/Bob's initial amounts is 100000 ETH/stETH/frxETH/rETH each (via mint_alice)
     assert wrapped_decimals == [18, 18, 18, 18]
-    assert initial_amounts == [10000 * 10 ** i for i in wrapped_decimals]
+    assert initial_amounts == [100000 * 10 ** i for i in wrapped_decimals]
 
     # Initial deposit requires all coins
     amounts = [amount // 2 for amount in initial_amounts]
     amounts[1] = 0
-    assert amounts == [5000 * 10 ** 18, 0, 5000 * 10 ** 18, 5000 * 10 ** 18]
+    assert amounts == [50000 * 10 ** 18, 0, 50000 * 10 ** 18, 50000 * 10 ** 18]
     with brownie.reverts():
         swap.add_liquidity(amounts, 0, {"from": alice})
     assert pool_token.totalSupply() == 0
     
     # Initial deposit does not require identical coins. Note, `approve_alice` is required
-    deposit_amounts = [5000 * 10 ** 18, 4000 * 10 ** 18, 3000 * 10 ** 18, 2000 * 10 ** 18]
+    deposit_amounts = [50000 * 10 ** 18, 4000 * 10 ** 18, 3000 * 10 ** 18, 2000 * 10 ** 18]
     swap.add_liquidity(deposit_amounts, 0, {"from": alice, "value": deposit_amounts[0]})
     # print(pool_token.totalSupply())
     
